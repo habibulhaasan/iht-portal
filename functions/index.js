@@ -16,8 +16,10 @@ const db = getFirestore();
 const REQUIRED_PERSONAL = ["name", "dob", "bloodGroup", "gender", "maritalStatus", "phone"];
 const REQUIRED_ACADEMIC = ["department", "session", "passingYear"];
 
+// Address is stored as IDs only: { divisionId, districtId, upazilaId }
+// (see components/steps/AddressStep.jsx). Keep these keys in sync.
 function isAddressFilled(a) {
-  return !!a?.division && !!a?.zila && !!a?.upazila;
+  return !!a?.divisionId && !!a?.districtId && !!a?.upazilaId;
 }
 
 function isEmploymentFilled(e) {

@@ -111,7 +111,7 @@ export default function EmploymentStep({ data, setData }) {
                       >
                         <option value="">All divisions</option>
                         {BD_DIVISIONS.map((d) => (
-                          <option key={d.id} value={d.id}>{d.name}</option>
+                          <option key={d.id} value={d.id}>{d.nameBn}</option>
                         ))}
                       </select>
                     </div>
@@ -124,7 +124,7 @@ export default function EmploymentStep({ data, setData }) {
                       >
                         <option value="">All districts</option>
                         {districts.map((d) => (
-                          <option key={d.id} value={d.id}>{d.name}</option>
+                          <option key={d.id} value={d.id}>{d.nameBn}</option>
                         ))}
                       </select>
                     </div>
@@ -138,7 +138,7 @@ export default function EmploymentStep({ data, setData }) {
                       </option>
                       {officeOptions.map((h) => (
                         <option key={h.id} value={h.id}>
-                          {h.name} — {h.facilityType}
+                          {h.nameBn} — {h.facilityType}
                         </option>
                       ))}
                     </select>

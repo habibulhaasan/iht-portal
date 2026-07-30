@@ -20,6 +20,7 @@ function AddressBlock({ label, value, onChange }) {
         {label}
       </label>
       <div className="field-row" style={{ marginBottom: 10 }}>
+        <div className="field" style={{ marginBottom: 0 }}>
         <select
           value={address.divisionId}
           onChange={(e) => set({ divisionId: e.target.value, districtId: "", upazilaId: "" })}
@@ -27,10 +28,12 @@ function AddressBlock({ label, value, onChange }) {
         >
           <option value="">Division</option>
           {BD_DIVISIONS.map((d) => (
-            <option key={d.id} value={d.id}>{d.name}</option>
+            <option key={d.id} value={d.id}>{d.nameBn}</option>
           ))}
         </select>
+        </div>
 
+        <div className="field" style={{ marginBottom: 0 }}>
         <select
           value={address.districtId}
           onChange={(e) => set({ districtId: e.target.value, upazilaId: "" })}
@@ -39,11 +42,13 @@ function AddressBlock({ label, value, onChange }) {
         >
           <option value="">District</option>
           {districts.map((d) => (
-            <option key={d.id} value={d.id}>{d.name}</option>
+            <option key={d.id} value={d.id}>{d.nameBn}</option>
           ))}
         </select>
+        </div>
       </div>
 
+      <div className="field" style={{ marginBottom: 0 }}>
       <select
         value={address.upazilaId}
         onChange={(e) => set({ upazilaId: e.target.value })}
@@ -52,9 +57,10 @@ function AddressBlock({ label, value, onChange }) {
       >
         <option value="">Upazila</option>
         {upazilas.map((u) => (
-          <option key={u.id} value={u.id}>{u.name}</option>
+          <option key={u.id} value={u.id}>{u.nameBn}</option>
         ))}
       </select>
+      </div>
     </div>
   );
 }
