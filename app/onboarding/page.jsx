@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { doc, setDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../../lib/firebase";
 import { useAuth } from "../../context/AuthContext";
 import ProgressBar from "../../components/ProgressBar";
@@ -53,6 +53,18 @@ function isStepValid(stepKey, data) {
   }
 }
 
+// Mirrors computedProfileComplete() in firestore.rules field-for-field.
+// The rule independently recomputes this from the already-committed
+// profiles/{uid} doc, so this is just for the client to know what value
+// the rule will accept — it can't be used to spoof anything.
+function isProfileComplete(data) {
+  const personalOk = !!data.name && !!data.dob && !!data.bloodGroup && !!data.gender && !!data.maritalStatus && !!data.phone;
+  const academicOk = !!data.department && !!data.session && !!data.passingYear;
+  const addressOk = isAddressFilled(data.permanentAddress) && isAddressFilled(data.currentAddress);
+  const employmentOk = isEmploymentFilled(data.employment);
+  return personalOk && academicOk && addressOk && employmentOk;
+}
+
 function computeOverallPercent(data) {
   let filled = 0;
   let total = 0;
@@ -71,11 +83,6 @@ function computeOverallPercent(data) {
 
   return Math.round((filled / total) * 100);
 }
-
-// How long to keep polling for the Cloud Function to flip profileComplete
-// before giving up and telling the user to retry.
-const CONFIRMATION_ATTEMPTS = 8;
-const CONFIRMATION_DELAY_MS = 1000;
 
 export default function OnboardingPage() {
   const { user, refreshUserDoc } = useAuth();
@@ -105,22 +112,6 @@ export default function OnboardingPage() {
     setStepIndex((i) => Math.max(i - 1, 0));
   };
 
-  // Polls via refreshUserDoc (one-shot getDoc), NOT onSnapshot — this is
-  // deliberate. onSnapshot's Listen channel can be silently blocked by ad
-  // blockers / privacy extensions (ERR_BLOCKED_BY_CLIENT), which previously
-  // left this screen stuck on "Confirming…" forever even though the write
-  // and the Cloud Function had both already succeeded. Each call here also
-  // updates the shared AuthContext state, so the dashboard's RouteGuard sees
-  // the fresh profileComplete value too, not just this component.
-  const waitForProfileComplete = async () => {
-    for (let i = 0; i < CONFIRMATION_ATTEMPTS; i++) {
-      const fresh = await refreshUserDoc();
-      if (fresh?.profileComplete) return true;
-      await new Promise((r) => setTimeout(r, CONFIRMATION_DELAY_MS));
-    }
-    return false;
-  };
-
   const handleFinish = async () => {
     if (!canProceed) {
       setError("Please complete this step first.");
@@ -129,10 +120,10 @@ export default function OnboardingPage() {
     setSaving(true);
     setError("");
     try {
-      // profileComplete, lastDonationDate, and donationCount are no longer
-      // written from the client — recalcProfileComplete /
-      // recalcDonationStats (Cloud Functions) are the sole authority on
-      // those now, so a user editing their own doc directly can't spoof them.
+      // Step 1: write the profile itself. lastDonationDate/donationCount are
+      // still not written from the client — recalcDonationStats (Cloud
+      // Function, Blaze-only) is the sole authority on those if/when that's
+      // deployed. profileComplete is handled below without needing Blaze.
       await setDoc(
         doc(db, "profiles", user.uid),
         {
@@ -142,19 +133,34 @@ export default function OnboardingPage() {
         },
         { merge: true }
       );
+
+      // Step 2: set profileComplete ourselves. firestore.rules independently
+      // recomputes the same verdict from the profiles/{uid} doc we just
+      // committed and only allows this write if it matches — so this can't
+      // be spoofed, and it works on the free Spark plan since it doesn't
+      // depend on the recalcProfileComplete Cloud Function (Blaze-only).
       setSaving(false);
       setWaitingForConfirmation(true);
 
-      const confirmed = await waitForProfileComplete();
-      if (confirmed) {
+      const complete = isProfileComplete(data);
+      await updateDoc(doc(db, "users", user.uid), {
+        profileComplete: complete,
+        updatedAt: serverTimestamp(),
+      });
+
+      const fresh = await refreshUserDoc();
+      if (fresh?.profileComplete) {
         router.replace("/dashboard");
       } else {
         setWaitingForConfirmation(false);
         setError(
-          "Your profile was saved, but we're still finalizing it. Please wait a moment and try again, or refresh the page."
+          complete
+            ? "Your profile was saved, but we're still finalizing it. Please wait a moment and try again, or refresh the page."
+            : "Some required fields are missing — please go back and check each step."
         );
       }
     } catch (err) {
+      console.error("Onboarding finish failed:", err);
       setError("Couldn't save your profile — please try again.");
       setSaving(false);
       setWaitingForConfirmation(false);
