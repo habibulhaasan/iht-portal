@@ -1,0 +1,85 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function isAdmin() {
+      return isSignedIn() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin";
+    }
+
+    // True until recalcProfileComplete (Cloud Function) flips profileComplete
+    // to true. Lets the owner set locked fields (name, dob, department, etc.)
+    // for the first time during onboarding — after that, only admins can.
+    function isOnboardingInProgress(uid) {
+      return get(/databases/$(database)/documents/users/$(uid)).data.profileComplete == false;
+    }
+
+    // Fields a regular user is allowed to change on their own profile.
+    // Everything else (name, dob, bloodGroup, gender, maritalStatus, department,
+    // session, passingYear, finalYearRoll, permanentAddress) is admin-only.
+    // Note: lastDonationDate/donationCount are deliberately NOT in this list —
+    // recalcDonationStats (Cloud Function, Admin SDK) is the sole writer of
+    // those, so a user editing their own doc client-side can't spoof a
+    // donation count. Admin SDK writes bypass these rules entirely, so the
+    // function doesn't need to be listed as "allowed" here.
+    function onlyUserEditableFieldsChanged() {
+      let allowed = ['currentAddress', 'phone', 'employment', 'visibility', 'photo', 'updatedAt'];
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(allowed);
+    }
+
+    match /users/{uid} {
+      allow read: if isOwner(uid) || isAdmin();
+      // Can't self-assign the admin role at signup.
+      allow create: if isOwner(uid) && request.resource.data.role == "user";
+      // profileComplete is written by recalcProfileComplete (Cloud Function,
+      // bypasses rules) — the client itself only ever touches 'updatedAt'.
+      // Admins are restricted to 'role'/'profileComplete'/'updatedAt' so they
+      // can't quietly rewrite someone's email from here.
+      allow update: if
+        (isOwner(uid) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['updatedAt'])) ||
+        (isAdmin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role', 'profileComplete', 'updatedAt']));
+      allow delete: if isAdmin();
+    }
+
+    match /profiles/{uid} {
+      // Directory browsing needs read access to other users' profiles too —
+      // visibility of individual fields (phone/email/etc.) is enforced client-side
+      // via the `visibility` map, since Firestore rules can't redact fields.
+      allow read: if isSignedIn();
+      allow create: if isOwner(uid); // initial onboarding write
+      allow update: if isAdmin()
+        || (isOwner(uid) && isOnboardingInProgress(uid))
+        || (isOwner(uid) && onlyUserEditableFieldsChanged());
+      allow delete: if isAdmin();
+
+      match /bloodDonations/{donationId} {
+        allow read: if isSignedIn();
+        allow write: if isOwner(uid) || isAdmin();
+      }
+    }
+
+    match /users/{uid}/favorites/{favUid} {
+      allow read, write: if isOwner(uid);
+    }
+
+    match /auditLogs/{logId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin();
+      allow update, delete: if false; // logs are immutable
+    }
+
+    match /config/{docId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+  }
+}
