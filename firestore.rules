@@ -16,11 +16,42 @@ service cloud.firestore {
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin";
     }
 
-    // True until recalcProfileComplete (Cloud Function) flips profileComplete
-    // to true. Lets the owner set locked fields (name, dob, department, etc.)
-    // for the first time during onboarding — after that, only admins can.
+    // True until the owner's users/{uid}.profileComplete flips to true.
+    // Lets the owner set locked fields (name, dob, department, etc.) for the
+    // first time during onboarding — after that, only admins can.
     function isOnboardingInProgress(uid) {
       return get(/databases/$(database)/documents/users/$(uid)).data.profileComplete == false;
+    }
+
+    // --- Free-tier replacement for the recalcProfileComplete Cloud Function ---
+    // No Cloud Functions (Blaze plan) required: instead of trusting the client's
+    // claim, we recompute completeness ourselves from the *actual* profiles/{uid}
+    // doc already committed, so a user still can't spoof profileComplete from
+    // devtools — they can only set it to the value this function independently
+    // derives. Keep this in sync with isStepValid() in app/onboarding/page.jsx.
+    function isAddressFilled(a) {
+      return a != null && a.divisionId != null && a.districtId != null && a.upazilaId != null;
+    }
+
+    function isEmploymentFilled(e) {
+      return e != null && e.status != null && (
+        e.status == "studying" ||
+        (
+          e.jobType != null && (
+            (e.jobType == "non-govt" && e.officeName != null && e.officeLocation != null) ||
+            (e.jobType == "govt" && e.govtOrg != null && e.officeName != null)
+          )
+        )
+      );
+    }
+
+    function computedProfileComplete(uid) {
+      let p = get(/databases/$(database)/documents/profiles/$(uid)).data;
+      return p.name != null && p.dob != null && p.bloodGroup != null && p.gender != null &&
+        p.maritalStatus != null && p.phone != null &&
+        p.department != null && p.session != null && p.passingYear != null &&
+        isAddressFilled(p.permanentAddress) && isAddressFilled(p.currentAddress) &&
+        isEmploymentFilled(p.employment);
     }
 
     // Fields a regular user is allowed to change on their own profile.
@@ -40,12 +71,19 @@ service cloud.firestore {
       allow read: if isOwner(uid) || isAdmin();
       // Can't self-assign the admin role at signup.
       allow create: if isOwner(uid) && request.resource.data.role == "user";
-      // profileComplete is written by recalcProfileComplete (Cloud Function,
-      // bypasses rules) — the client itself only ever touches 'updatedAt'.
+      // profileComplete: the owner may set it themselves right after finishing
+      // onboarding, but ONLY to the value computedProfileComplete() derives
+      // from their actual (already-committed) profiles/{uid} doc — so they
+      // still can't hand-edit this to `true` in devtools with an empty profile.
       // Admins are restricted to 'role'/'profileComplete'/'updatedAt' so they
       // can't quietly rewrite someone's email from here.
       allow update: if
         (isOwner(uid) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['updatedAt'])) ||
+        (
+          isOwner(uid) &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['profileComplete', 'updatedAt']) &&
+          request.resource.data.profileComplete == computedProfileComplete(uid)
+        ) ||
         (isAdmin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role', 'profileComplete', 'updatedAt']));
       allow delete: if isAdmin();
     }
