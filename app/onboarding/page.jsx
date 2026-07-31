@@ -143,10 +143,32 @@ export default function OnboardingPage() {
       setWaitingForConfirmation(true);
 
       const complete = isProfileComplete(data);
-      await updateDoc(doc(db, "users", user.uid), {
-        profileComplete: complete,
-        updatedAt: serverTimestamp(),
-      });
+      const userRef = doc(db, "users", user.uid);
+      try {
+        await updateDoc(userRef, {
+          profileComplete: complete,
+          updatedAt: serverTimestamp(),
+        });
+      } catch (err) {
+        // Legacy/broken account: the users/{uid} doc never got created (e.g.
+        // the write in /register silently failed, or this is a
+        // manually-created test account). updateDoc throws "not-found" in
+        // that case — self-heal by creating it instead of leaving the user
+        // stuck in a loop they can't escape. Deliberately does NOT touch an
+        // existing doc's other fields (like role), since this only runs when
+        // there was no doc to update in the first place.
+        if (err.code === "not-found") {
+          await setDoc(userRef, {
+            email: user.email || "",
+            role: "user",
+            profileComplete: complete,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+          });
+        } else {
+          throw err;
+        }
+      }
 
       const fresh = await refreshUserDoc();
       if (fresh?.profileComplete) {
