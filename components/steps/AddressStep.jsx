@@ -3,12 +3,13 @@
 import { useState } from "react";
 import { BD_DIVISIONS, getDistrictsByDivision, getUpazilasByDistrict } from "../../lib/bdData";
 
-// Address shape stored in Firestore: { divisionId, districtId, upazilaId }
-// (IDs only — display names are looked up on read via bdData.js helpers,
-// so renamed/merged upazilas don't silently break old records.)
+// Address shape stored in Firestore: { divisionId, districtId, upazilaId, localAddress }
+// (IDs for the administrative levels — display names are looked up on read
+// via bdData.js helpers. localAddress is free text for detail below
+// upazila level, e.g. house/road/village.)
 
 function AddressBlock({ label, value, onChange }) {
-  const address = value || { divisionId: "", districtId: "", upazilaId: "" };
+  const address = value || { divisionId: "", districtId: "", upazilaId: "", localAddress: "" };
   const districts = address.divisionId ? getDistrictsByDivision(address.divisionId) : [];
   const upazilas = address.districtId ? getUpazilasByDistrict(address.districtId) : [];
 
@@ -21,45 +22,55 @@ function AddressBlock({ label, value, onChange }) {
       </label>
       <div className="field-row" style={{ marginBottom: 10 }}>
         <div className="field" style={{ marginBottom: 0 }}>
-        <select
-          value={address.divisionId}
-          onChange={(e) => set({ divisionId: e.target.value, districtId: "", upazilaId: "" })}
-          required
-        >
-          <option value="">Division</option>
-          {BD_DIVISIONS.map((d) => (
-            <option key={d.id} value={d.id}>{d.nameBn}</option>
-          ))}
-        </select>
+          <select
+            value={address.divisionId}
+            onChange={(e) => set({ divisionId: e.target.value, districtId: "", upazilaId: "" })}
+            required
+          >
+            <option value="">Division</option>
+            {BD_DIVISIONS.map((d) => (
+              <option key={d.id} value={d.id}>{d.nameBn}</option>
+            ))}
+          </select>
         </div>
 
         <div className="field" style={{ marginBottom: 0 }}>
-        <select
-          value={address.districtId}
-          onChange={(e) => set({ districtId: e.target.value, upazilaId: "" })}
-          disabled={!address.divisionId}
-          required
-        >
-          <option value="">District</option>
-          {districts.map((d) => (
-            <option key={d.id} value={d.id}>{d.nameBn}</option>
-          ))}
-        </select>
+          <select
+            value={address.districtId}
+            onChange={(e) => set({ districtId: e.target.value, upazilaId: "" })}
+            disabled={!address.divisionId}
+            required
+          >
+            <option value="">District</option>
+            {districts.map((d) => (
+              <option key={d.id} value={d.id}>{d.nameBn}</option>
+            ))}
+          </select>
         </div>
       </div>
 
+      <div className="field" style={{ marginBottom: 10 }}>
+        <select
+          value={address.upazilaId}
+          onChange={(e) => set({ upazilaId: e.target.value })}
+          disabled={!address.districtId}
+          required
+        >
+          <option value="">Upazila</option>
+          {upazilas.map((u) => (
+            <option key={u.id} value={u.id}>{u.nameBn}</option>
+          ))}
+        </select>
+      </div>
+
       <div className="field" style={{ marginBottom: 0 }}>
-      <select
-        value={address.upazilaId}
-        onChange={(e) => set({ upazilaId: e.target.value })}
-        disabled={!address.districtId}
-        required
-      >
-        <option value="">Upazila</option>
-        {upazilas.map((u) => (
-          <option key={u.id} value={u.id}>{u.nameBn}</option>
-        ))}
-      </select>
+        <input
+          type="text"
+          value={address.localAddress || ""}
+          onChange={(e) => set({ localAddress: e.target.value })}
+          placeholder="House/road/village — e.g. House 12, Road 4, Shalbon"
+        />
+        <p className="helper-text">Optional — detail below upazila level.</p>
       </div>
     </div>
   );

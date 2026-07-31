@@ -37,9 +37,9 @@ function employmentSummary(employment) {
 
 export default function MyProfileTab() {
   const { user } = useAuth();
-  const [profile, setProfile] = useState(null); // live, saved server data — source of truth for view mode
+  const [profile, setProfile] = useState(null);
   const [editing, setEditing] = useState(false);
-  const [formData, setFormData] = useState(null); // scratch copy, only touched while editing
+  const [formData, setFormData] = useState(null);
   const [saving, setSaving] = useState(false);
   const [savedMsg, setSavedMsg] = useState("");
 
@@ -126,8 +126,6 @@ export default function MyProfileTab() {
         <p style={{ color: "var(--forest)", fontSize: 13.5, marginTop: -18, marginBottom: 20 }}>{savedMsg}</p>
       )}
 
-      {/* ---------- Personal & academic details — always read-only here.
-          Admins manage these from /admin; see AdminEditForm.jsx. ---------- */}
       <div className="profile-section">
         <h3>
           Personal details <span className="admin-badge">Admin-managed</span>
@@ -139,6 +137,7 @@ export default function MyProfileTab() {
           <InfoRow label="Gender" value={cap(profile.gender)} />
           <InfoRow label="Marital status" value={cap(profile.maritalStatus)} />
           <InfoRow label="Permanent address" value={getLocationLabel(profile.permanentAddress?.upazilaId)} />
+          <InfoRow label="Permanent local address" value={profile.permanentAddress?.localAddress} />
         </div>
       </div>
 
@@ -154,10 +153,6 @@ export default function MyProfileTab() {
         </div>
       </div>
 
-      {/* ---------- Editable section: phone, photo, current address,
-          employment, visibility. Read-only text in view mode, real form
-          controls in edit mode — matches exactly what onlyUserEditableFieldsChanged()
-          allows in firestore.rules. ---------- */}
       <div className="profile-section">
         <h3>Contact & photo</h3>
 
@@ -226,7 +221,7 @@ export default function MyProfileTab() {
                 </select>
               </div>
             </div>
-            <div className="field">
+            <div className="field" style={{ marginBottom: 10 }}>
               <select
                 value={currentAddress.upazilaId || ""}
                 onChange={(e) => setAddress({ upazilaId: e.target.value })}
@@ -236,10 +231,20 @@ export default function MyProfileTab() {
                 {upazilas.map((u) => <option key={u.id} value={u.id}>{u.nameBn}</option>)}
               </select>
             </div>
+            <div className="field">
+              <label>Local address</label>
+              <input
+                type="text"
+                value={currentAddress.localAddress || ""}
+                onChange={(e) => setAddress({ localAddress: e.target.value })}
+                placeholder="House/road/village — e.g. House 12, Road 4, Shalbon"
+              />
+            </div>
           </>
         ) : (
           <div className="profile-info-grid">
             <InfoRow label="Current address" value={getLocationLabel(profile.currentAddress?.upazilaId)} />
+            <InfoRow label="Local address" value={profile.currentAddress?.localAddress} />
           </div>
         )}
       </div>
@@ -247,8 +252,6 @@ export default function MyProfileTab() {
       <div className="profile-section">
         <h3>Employment</h3>
         {editing ? (
-          // EmploymentStep's setData already matches useState's updater signature,
-          // so we can pass setFormData straight through with no wrapper.
           <EmploymentStep data={formData} setData={setFormData} />
         ) : (
           <div className="profile-info-grid">

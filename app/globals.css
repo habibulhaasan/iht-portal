@@ -482,7 +482,7 @@ select:disabled {
 
 .dashboard-main {
   padding: 40px;
-  max-width: 900px;
+  max-width: auto;
 }
 
 /* ---------- Blood donation log ---------- */
@@ -659,6 +659,7 @@ select:disabled {
   border: 1.5px solid var(--line);
   border-radius: 8px;
   font-size: 13.5px;
+  width: 100%;
 }
 
 /* ----- Desktop / tablet: table ----- */
@@ -983,3 +984,320 @@ select:disabled {
 .audit-arrow { margin: 0 6px; }
 .audit-new { color: var(--ink); font-weight: 600; }
 .audit-meta { font-size: 11px; color: #9a927e; }
+
+
+/* Desktop sidebar: visible ≥ your existing breakpoint, hidden below it */
+.dashboard-topbar-mobile,
+.dashboard-nav-mobile { display: none; }
+
+@media (max-width: 768px) { /* match your existing directory breakpoint */
+  .dashboard-sidebar-desktop { display: none; }
+
+  .dashboard-topbar-mobile {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+  }
+
+  .dashboard-nav-mobile {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+    background: var(--bg, #fff);
+    border-top: 1px solid var(--border, #eee);
+    z-index: 20;
+  }
+
+  .mobile-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    font-size: 11px;
+    color: var(--muted, #888);
+    background: none;
+    border: none;
+    padding: 4px 8px;
+    text-decoration: none;
+  }
+
+  .mobile-nav-item.active { color: var(--accent, #1d5fa8); }
+
+  /* Leave room so content isn't hidden behind the fixed bottom bar */
+  .dashboard-main { padding-bottom: 72px; }
+}
+
+.field select {
+  width: 100%;
+  padding: 10px 36px 10px 12px;
+  border: 1px solid var(--border, #ddd);
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  color: inherit;
+  background-color: #fff;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23888' stroke-width='1.5' fill='none' fill-rule='evenodd'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  cursor: pointer;
+}
+
+.field select:disabled {
+  background-color: #f5f5f4;
+  color: #999;
+  cursor: not-allowed;
+}
+
+.field select:focus {
+  outline: none;
+  border-color: var(--forest, #1f7a43);
+  box-shadow: 0 0 0 3px rgba(31, 122, 67, 0.12);
+}
+
+.address-fields-group { margin-bottom: 20px; }
+.address-group-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--forest, #1f7a43);
+  margin-bottom: 10px;
+}
+.admin-address-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+}
+@media (max-width: 640px) {
+  .admin-address-grid { grid-template-columns: 1fr; }
+}
+
+.admin-form-section-title {
+  margin: 28px 0 14px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--forest, #1f7a43);
+  border-bottom: 1px solid var(--border, #eee);
+  padding-bottom: 6px;
+}
+.readonly-value {
+  padding: 10px 12px;
+  border: 1px solid var(--border, #eee);
+  border-radius: 8px;
+  background: #f8f8f6;
+  color: #555;
+  font-size: 14px;
+}
+.admin-photo-row { display: flex; align-items: center; gap: 14px; }
+.admin-raw-json {
+  margin: 24px 0;
+  border: 1px solid var(--border, #eee);
+  border-radius: 8px;
+  padding: 10px 14px;
+}
+.admin-raw-json summary { cursor: pointer; font-size: 13px; color: #777; }
+.admin-raw-json pre {
+  margin-top: 10px;
+  font-size: 12px;
+  overflow-x: auto;
+  background: #f8f8f6;
+  padding: 12px;
+  border-radius: 6px;
+}
+
+.admin-stats-and-list { display: flex; flex-direction: column; gap: 20px; }
+.admin-list-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.chip-clear {
+  font-size: 12px; padding: 4px 10px; border-radius: 999px;
+  background: #fdeaf0; color: #b03566; border: none; cursor: pointer;
+}
+.admin-stats-panel { border: 1px solid var(--border, #eee); border-radius: 10px; padding: 16px; }
+.stats-summary-row { display: flex; gap: 12px; margin-bottom: 18px; }
+.stat-card {
+  flex: 1; text-align: left; padding: 14px 16px; border-radius: 10px;
+  border: 1px solid var(--border, #eee); background: #f8f8f6; cursor: pointer;
+}
+.stat-card-warn { background: #fff6e5; }
+.stat-number { font-size: 22px; font-weight: 700; }
+.stat-label { font-size: 12px; color: #777; }
+.stats-group { margin-top: 14px; }
+.stats-group h3 { font-size: 13px; color: #777; margin-bottom: 8px; }
+.stats-pill-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.stat-pill {
+  font-size: 12.5px; padding: 6px 12px; border-radius: 999px;
+  background: #eaf4ff; color: #1d5fa8; border: none; cursor: pointer;
+}
+.stat-pill-static { cursor: default; opacity: 0.7; }
+.stat-pill strong { margin-left: 4px; }
+
+.dashboard-shell {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.dashboard-sidebar-desktop {
+  height: 100vh;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+.dashboard-main {
+  flex: 1;
+  overflow-y: auto;
+  height: 100vh;
+  scrollbar-width: none;
+}
+
+@media (max-width: 768px) {
+  .dashboard-shell {
+    display: block;
+    height: auto;
+    overflow: visible;
+  }
+
+  .dashboard-topbar-mobile {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 30;
+  }
+
+  .dashboard-nav-mobile {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 30;
+  }
+
+  .dashboard-main {
+    height: auto;
+    overflow-y: visible;
+    padding-top: 56px;   /* clears the fixed top bar */
+    padding-bottom: 72px; /* clears the fixed bottom nav */
+  }
+}
+
+/* ---------- Admin: full-width stats band + two-column body ---------- */
+.admin-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
+.admin-stats-panel { width: 100%; }
+
+.admin-columns {
+  display: flex;
+  gap: 20px;
+  width: 100%;
+  align-items: flex-start;
+}
+
+.admin-list-pane {
+  flex: 0 0 320px;
+  min-width: 0;
+}
+
+.admin-edit-pane {
+  flex: 1;
+  min-width: 0;
+}
+
+@media (max-width: 900px) {
+  .admin-columns { flex-direction: column; }
+  .admin-list-pane { flex: 1 1 auto; width: 100%; }
+}
+
+/* ---------- Directory visibility: cleaner rows + real toggle switches ---------- */
+.directory-settings-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.directory-settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 4px;
+  border-bottom: 1px solid var(--border, #eee);
+}
+.directory-settings-row:last-child { border-bottom: none; }
+
+.directory-settings-text { min-width: 0; }
+.directory-settings-label { font-size: 14px; font-weight: 600; }
+.directory-settings-sub { font-size: 12px; color: #888; margin-top: 2px; }
+
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  flex-shrink: 0;
+}
+.toggle-switch input {
+  position: absolute;
+  opacity: 0;
+  width: 40px;
+  height: 22px;
+  margin: 0;
+  cursor: pointer;
+}
+.toggle-track {
+  display: block;
+  width: 40px;
+  height: 22px;
+  border-radius: 999px;
+  background: #d8d5cc;
+  transition: background 0.15s ease;
+}
+.toggle-thumb {
+  display: block;
+  width: 16px;
+  height: 16px;
+  margin: 3px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.15s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+}
+.toggle-switch input:checked + .toggle-track {
+  background: var(--forest, #1f7a43);
+}
+.toggle-switch input:checked + .toggle-track .toggle-thumb {
+  transform: translateX(18px);
+}
+.toggle-switch input:disabled + .toggle-track { opacity: 0.5; cursor: not-allowed; }
+
+/* ---------- Hide the visible scrollbar on the main scroll area while
+   keeping it scrollable (mouse wheel / touch / keyboard all still work) ---------- */
+.dashboard-main {
+  scrollbar-width: none;      /* Firefox */
+  -ms-overflow-style: none;   /* old Edge/IE */
+}
+.dashboard-main::-webkit-scrollbar {
+  display: none;               /* Chrome/Safari/new Edge */
+}
+
+/* ---------- Mobile top bar: give it an actual background ----------
+   Previously relying on var(--bg) alone, which is transparent if that
+   variable isn't defined anywhere in this codebase — same explicit
+   fallback color as the bottom nav so they visually match. ---------- */
+@media (max-width: 768px) {
+  .dashboard-topbar-mobile {
+    background-color: var(--bg, #ffffff);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  }
+  .dashboard-nav-mobile {
+    background-color: var(--bg, #ffffff);
+  }
+}

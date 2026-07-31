@@ -2,19 +2,17 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { collection, onSnapshot, doc, setDoc, deleteDoc, serverTimestamp } from "firebase/firestore";
-import { Star, Phone, Mail, MapPin, Briefcase } from "lucide-react";
+import { Star, Phone, Mail, MapPin, Briefcase, GraduationCap } from "lucide-react";
 import { db } from "../../lib/firebase";
 import { useAuth } from "../../context/AuthContext";
 import { BD_DIVISIONS, getDistrictsByDivision, getAllDistricts, getAddressLabel } from "../../lib/bdData";
 import { resolveEmploymentAddress } from "../../lib/hospitalData";
 import { defaultAvatarFor } from "../../lib/photoUtils";
+import { useDirectorySettings, isFieldVisible } from "../../lib/directorySettings";
 
 const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"];
 const DEPARTMENTS = ["Laboratory", "Radiology", "Physiotherapy", "Radiotherapy", "Dental", "Pharmacy", "SIT"];
 
-// Distinct, light pastel background per department so cards/rows are easy to
-// scan at a glance — matches the site's warm palette rather than clashing
-// with it.
 const DEPARTMENT_COLORS = {
   Laboratory: { bg: "#eaf4ff", fg: "#1d5fa8" },
   Radiology: { bg: "#f3eafb", fg: "#7a3fa0" },
@@ -47,8 +45,22 @@ export function BloodDropBadge({ group, size = 38 }) {
   );
 }
 
+// "Studying" or "Job · Govt (DGHS)" / "Job · Non-Govt" — same status vocabulary
+// as EmploymentStep / the filters below, just rendered for humans.
+function employmentStatusLabel(e) {
+  if (!e?.status) return "—";
+  if (e.status === "studying") return "Studying";
+  if (e.status === "job") {
+    if (e.jobType === "govt") return `Job · Govt${e.govtOrg ? ` (${e.govtOrg})` : ""}`;
+    if (e.jobType === "non-govt") return "Job · Non-Govt";
+    return "Job";
+  }
+  return "—";
+}
+
 export default function DirectoryTab() {
   const { user } = useAuth();
+  const { settings: adminSettings } = useDirectorySettings();
   const [profiles, setProfiles] = useState([]);
   const [favoriteIds, setFavoriteIds] = useState(new Set());
   const [filters, setFilters] = useState({
@@ -61,9 +73,6 @@ export default function DirectoryTab() {
   });
 
   useEffect(() => {
-    // Fine to fetch the whole collection client-side for a single-institute
-    // scale dataset. If this grows large, switch to Firestore compound
-    // queries with composite indexes instead of filtering in memory.
     const unsub = onSnapshot(collection(db, "profiles"), (snap) => {
       setProfiles(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
     });
@@ -109,6 +118,12 @@ export default function DirectoryTab() {
       ...(key === "divisionId" ? { districtId: "" } : {}),
     }));
 
+  // A column only ever appears if the admin allows that field at all —
+  // whether it's also member-controlled just decides what each *row* shows
+  // within that. No point rendering a header full of "—" for a field the
+  // institute has switched off entirely.
+  const showCol = (key) => adminSettings[key] !== false;
+
   return (
     <div>
       <h2>Directory</h2>
@@ -141,28 +156,31 @@ export default function DirectoryTab() {
 
       {filtered.length === 0 && <p className="helper-text">No one matches these filters yet.</p>}
 
-      {/* Desktop / tablet: table. Mobile: cards. Both render the same data —
-          which one is visible is decided purely by CSS media queries (see
-          .directory-table-wrap / .directory-grid in globals.css), so there's
-          no layout flash or JS viewport detection needed. */}
       <div className="directory-table-wrap">
         <table className="directory-table">
           <thead>
             <tr>
               <th></th>
               <th>Name</th>
-              <th>Blood</th>
-              <th>Department</th>
-              <th>Session</th>
-              <th>Location</th>
-              <th>Office address</th>
-              <th>Contact</th>
+              {showCol("bloodGroup") && <th>Blood</th>}
+              {showCol("department") && <th>Department</th>}
+              {showCol("session") && <th>Session</th>}
+              {showCol("status") && <th>Status</th>}
+              {showCol("location") && <th>Location</th>}
+              {showCol("officeAddress") && <th>Office address</th>}
+              {(showCol("phone") || showCol("email")) && <th>Contact</th>}
               <th></th>
             </tr>
           </thead>
           <tbody>
             {filtered.map((p) => (
-              <DirectoryRow key={p.id} profile={p} isFavorite={favoriteIds.has(p.id)} onToggleFavorite={() => toggleFavorite(p.id)} />
+              <DirectoryRow
+                key={p.id}
+                profile={p}
+                adminSettings={adminSettings}
+                isFavorite={favoriteIds.has(p.id)}
+                onToggleFavorite={() => toggleFavorite(p.id)}
+              />
             ))}
           </tbody>
         </table>
@@ -170,29 +188,51 @@ export default function DirectoryTab() {
 
       <div className="directory-grid-mobile">
         {filtered.map((p) => (
-          <DirectoryCard key={p.id} profile={p} isFavorite={favoriteIds.has(p.id)} onToggleFavorite={() => toggleFavorite(p.id)} />
+          <DirectoryCard
+            key={p.id}
+            profile={p}
+            adminSettings={adminSettings}
+            isFavorite={favoriteIds.has(p.id)}
+            onToggleFavorite={() => toggleFavorite(p.id)}
+          />
         ))}
       </div>
     </div>
   );
 }
 
-function useProfileDisplay(profile) {
-  const v = profile.visibility || {};
+// Resolves ALL visibility for one profile in one place — admin switch AND
+// (where applicable) the member's own consent — so DirectoryRow and
+// DirectoryCard can't drift out of sync with each other.
+function useVisibleProfile(profile, adminSettings) {
   const avatar =
     profile.photo?.useDefault === false && profile.photo?.base64
       ? profile.photo.base64
       : defaultAvatarFor(profile.gender);
 
-  const locationLabel = v.currentAddress ? getAddressLabel(profile.currentAddress, "bn") : "";
-  const officeAddress = v.employment ? resolveEmploymentAddress(profile.employment) : "";
-  const officeName = v.employment ? profile.employment?.officeName : "";
+  const show = {
+    bloodGroup: isFieldVisible("bloodGroup", adminSettings, profile),
+    department: isFieldVisible("department", adminSettings, profile),
+    session: isFieldVisible("session", adminSettings, profile),
+    status: isFieldVisible("status", adminSettings, profile),
+    location: isFieldVisible("location", adminSettings, profile),
+    officeAddress: isFieldVisible("officeAddress", adminSettings, profile),
+    phone: isFieldVisible("phone", adminSettings, profile),
+    email: isFieldVisible("email", adminSettings, profile),
+  };
 
-  return { v, avatar, locationLabel, officeAddress, officeName };
+  return {
+    avatar,
+    show,
+    locationLabel: show.location ? getAddressLabel(profile.currentAddress, "bn") : "",
+    officeAddress: show.officeAddress ? resolveEmploymentAddress(profile.employment) : "",
+    officeName: show.officeAddress ? profile.employment?.officeName : "",
+    statusLabel: show.status ? employmentStatusLabel(profile.employment) : "",
+  };
 }
 
-function DirectoryRow({ profile, isFavorite, onToggleFavorite }) {
-  const { v, avatar, locationLabel, officeAddress, officeName } = useProfileDisplay(profile);
+function DirectoryRow({ profile, adminSettings, isFavorite, onToggleFavorite }) {
+  const { show, avatar, locationLabel, officeAddress, officeName, statusLabel } = useVisibleProfile(profile, adminSettings);
 
   return (
     <tr className="directory-row">
@@ -200,39 +240,51 @@ function DirectoryRow({ profile, isFavorite, onToggleFavorite }) {
         <img src={avatar} alt={profile.name} className="directory-row-avatar" />
       </td>
       <td className="directory-row-name">{profile.name}</td>
-      <td><BloodDropBadge group={profile.bloodGroup} size={32} /></td>
-      <td><DepartmentChip department={profile.department} /></td>
-      <td>{profile.session || "—"}</td>
-      <td>
-        {locationLabel ? (
-          <span className="directory-row-location">
-            <MapPin size={13} />
-            {locationLabel}
-          </span>
-        ) : (
-          "—"
-        )}
-      </td>
-      <td>
-        {v.employment && (officeName || officeAddress) ? (
-          <div>
-            {officeName && <div>{officeName}</div>}
-            {officeAddress && <div className="directory-row-sub">{officeAddress}</div>}
+      {show.bloodGroup !== undefined && adminSettings.bloodGroup !== false && (
+        <td>{show.bloodGroup ? <BloodDropBadge group={profile.bloodGroup} size={32} /> : "—"}</td>
+      )}
+      {adminSettings.department !== false && (
+        <td>{show.department ? <DepartmentChip department={profile.department} /> : "—"}</td>
+      )}
+      {adminSettings.session !== false && <td>{show.session ? (profile.session || "—") : "—"}</td>}
+      {adminSettings.status !== false && <td>{statusLabel || "—"}</td>}
+      {adminSettings.location !== false && (
+        <td>
+          {locationLabel ? (
+            <span className="directory-row-location">
+              <MapPin size={13} />
+              {locationLabel}
+            </span>
+          ) : (
+            "—"
+          )}
+        </td>
+      )}
+      {adminSettings.officeAddress !== false && (
+        <td>
+          {officeName || officeAddress ? (
+            <div>
+              {officeName && <div>{officeName}</div>}
+              {officeAddress && <div className="directory-row-sub">{officeAddress}</div>}
+            </div>
+          ) : (
+            "—"
+          )}
+        </td>
+      )}
+      {(adminSettings.phone !== false || adminSettings.email !== false) && (
+        <td>
+          <div className="directory-row-contact">
+            {show.phone && profile.phone && (
+              <span title={profile.phone}><Phone size={15} /></span>
+            )}
+            {show.email && profile.email && (
+              <span title={profile.email}><Mail size={15} /></span>
+            )}
+            {!show.phone && !show.email && "—"}
           </div>
-        ) : (
-          "—"
-        )}
-      </td>
-      <td>
-        <div className="directory-row-contact">
-          {v.phone && profile.phone && (
-            <span title={profile.phone}><Phone size={15} /></span>
-          )}
-          {v.email && profile.email && (
-            <span title={profile.email}><Mail size={15} /></span>
-          )}
-        </div>
-      </td>
+        </td>
+      )}
       <td>
         <button
           className={`favorite-btn ${isFavorite ? "active" : ""}`}
@@ -246,8 +298,8 @@ function DirectoryRow({ profile, isFavorite, onToggleFavorite }) {
   );
 }
 
-export function DirectoryCard({ profile, isFavorite, onToggleFavorite }) {
-  const { v, avatar, officeAddress, officeName } = useProfileDisplay(profile);
+export function DirectoryCard({ profile, adminSettings, isFavorite, onToggleFavorite }) {
+  const { show, avatar, officeAddress, officeName, statusLabel } = useVisibleProfile(profile, adminSettings);
 
   return (
     <div className="directory-card">
@@ -263,13 +315,22 @@ export function DirectoryCard({ profile, isFavorite, onToggleFavorite }) {
         <img src={avatar} alt={profile.name} className="photo-preview" style={{ width: 56, height: 56 }} />
         <div>
           <div className="directory-card-name">{profile.name}</div>
-          <DepartmentChip department={profile.department} />
+          <div className="directory-card-tags">
+            {show.department && <DepartmentChip department={profile.department} />}
+            {show.session && profile.session && <span className="session-chip">{profile.session}</span>}
+          </div>
         </div>
-        <BloodDropBadge group={profile.bloodGroup} />
+        {show.bloodGroup && <BloodDropBadge group={profile.bloodGroup} />}
       </div>
 
       <div className="directory-card-body">
-        {(officeName || officeAddress) && v.employment && (
+        {show.status && statusLabel && statusLabel !== "—" && (
+          <div className="directory-card-meta">
+            <GraduationCap size={14} />
+            <span>{statusLabel}</span>
+          </div>
+        )}
+        {(officeName || officeAddress) && show.officeAddress && (
           <div className="directory-card-meta">
             <Briefcase size={14} />
             <span>
@@ -279,13 +340,19 @@ export function DirectoryCard({ profile, isFavorite, onToggleFavorite }) {
             </span>
           </div>
         )}
-        {v.email && profile.email && (
+        {show.location && profile.currentAddress && (
+          <div className="directory-card-meta">
+            <MapPin size={14} />
+            <span>{getAddressLabel(profile.currentAddress, "bn")}</span>
+          </div>
+        )}
+        {show.email && profile.email && (
           <div className="directory-card-meta">
             <Mail size={14} />
             <span>{profile.email}</span>
           </div>
         )}
-        {v.phone && profile.phone && (
+        {show.phone && profile.phone && (
           <div className="directory-card-meta">
             <Phone size={14} />
             <span>{profile.phone}</span>

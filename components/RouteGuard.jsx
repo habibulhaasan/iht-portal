@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "../context/AuthContext";
+import AppShell from "./nav/AppShell";
 
 const PUBLIC_PATHS = ["/login", "/register", "/forgot-password"];
 
@@ -42,5 +43,11 @@ export default function RouteGuard({ children }) {
     );
   }
 
-  return children;
+  const isPublic = PUBLIC_PATHS.includes(pathname);
+  // Nav only makes sense once someone is authenticated, past onboarding, and
+  // not on a public auth page — covers /dashboard, /admin, and anything
+  // added later without needing to touch this file again.
+  const showShell = !!user && !!userDoc?.profileComplete && !isPublic && pathname !== "/onboarding";
+
+  return showShell ? <AppShell>{children}</AppShell> : children;
 }
