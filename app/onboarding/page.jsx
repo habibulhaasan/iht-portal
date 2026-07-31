@@ -128,7 +128,7 @@ export default function OnboardingPage() {
         doc(db, "profiles", user.uid),
         {
           ...data,
-          visibility: { phone: false, email: false, currentAddress: true, employment: true },
+          visibility: { phone: true, email: true, currentAddress: true, employment: true },
           updatedAt: serverTimestamp(),
         },
         { merge: true }
