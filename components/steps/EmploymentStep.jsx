@@ -1,20 +1,22 @@
 "use client";
 
-import { BD_DIVISIONS, getDistrictsByDivision } from "../../lib/bdData";
+import { BD_DIVISIONS, getDistrictsByDivision, getUpazilasByDistrict } from "../../lib/bdData";
 import { HOSPITALS } from "../../lib/hospitalData";
 
-// Office is chosen via Division -> District -> facility, filtered by agency
-// (DGHS/DGFP), from the real facility directory in lib/hospitals.json.
-// Only ~3% of facilities (city-corporation thana clinics, mostly) don't
-// resolve to a district id — those are excluded from this cascade and can
-// still be captured through the "Other" govt-org free-text path.
+// Office is chosen via Division -> District -> Upazila -> facility, filtered
+// by agency (DGHS/DGFP), from the real facility directory in
+// lib/hospitals.json. Narrowing down to upazila keeps the office list short
+// even in busy districts. Not every facility resolves to an upazila (~3%,
+// mostly city-corporation thana clinics) — those stay reachable by leaving
+// upazila unset, and "my office isn't listed" always falls back to free text.
 
-function officesFor(agency, divisionId, districtId) {
+function officesFor(agency, divisionId, districtId, upazilaId) {
   return HOSPITALS.filter(
     (h) =>
       h.agency === agency &&
       (!divisionId || h.location.divisionId === divisionId) &&
-      (!districtId || h.location.districtId === districtId)
+      (!districtId || h.location.districtId === districtId) &&
+      (!upazilaId || h.location.upazilaId === upazilaId)
   );
 }
 
@@ -41,12 +43,21 @@ export default function EmploymentStep({ data, setData }) {
   };
 
   const setGovtOrg = (govtOrg) => () =>
-    setEmployment({ govtOrg, officeId: "", officeName: "", officeDivisionId: "", officeDistrictId: "" });
+    setEmployment({
+      govtOrg,
+      officeId: "",
+      officeName: "",
+      officeDivisionId: "",
+      officeDistrictId: "",
+      officeUpazilaId: "",
+      officeManualEntry: false,
+    });
 
   const districts = employment.officeDivisionId ? getDistrictsByDivision(employment.officeDivisionId) : [];
+  const upazilas = employment.officeDistrictId ? getUpazilasByDistrict(employment.officeDistrictId) : [];
   const officeOptions =
     employment.govtOrg === "DGHS" || employment.govtOrg === "DGFP"
-      ? officesFor(employment.govtOrg, employment.officeDivisionId, employment.officeDistrictId)
+      ? officesFor(employment.govtOrg, employment.officeDivisionId, employment.officeDistrictId, employment.officeUpazilaId)
       : null;
 
   const selectOffice = (e) => {
@@ -54,6 +65,13 @@ export default function EmploymentStep({ data, setData }) {
     const hospital = HOSPITALS.find((h) => h.id === officeId);
     setEmployment({ officeId, officeName: hospital?.name || "" });
   };
+
+  const toggleManualEntry = () =>
+    setEmployment({
+      officeManualEntry: !employment.officeManualEntry,
+      officeId: "",
+      officeName: "",
+    });
 
   return (
     <div>
@@ -100,13 +118,19 @@ export default function EmploymentStep({ data, setData }) {
 
               {(employment.govtOrg === "DGHS" || employment.govtOrg === "DGFP") && (
                 <>
-                  <div className="field-row" style={{ marginBottom: 10 }}>
+                  <div className="field-row-3" style={{ marginBottom: 10 }}>
                     <div className="field" style={{ marginBottom: 0 }}>
                       <label>Division</label>
                       <select
                         value={employment.officeDivisionId || ""}
                         onChange={(e) =>
-                          setEmployment({ officeDivisionId: e.target.value, officeDistrictId: "", officeId: "", officeName: "" })
+                          setEmployment({
+                            officeDivisionId: e.target.value,
+                            officeDistrictId: "",
+                            officeUpazilaId: "",
+                            officeId: "",
+                            officeName: "",
+                          })
                         }
                       >
                         <option value="">All divisions</option>
@@ -119,7 +143,9 @@ export default function EmploymentStep({ data, setData }) {
                       <label>District</label>
                       <select
                         value={employment.officeDistrictId || ""}
-                        onChange={(e) => setEmployment({ officeDistrictId: e.target.value, officeId: "", officeName: "" })}
+                        onChange={(e) =>
+                          setEmployment({ officeDistrictId: e.target.value, officeUpazilaId: "", officeId: "", officeName: "" })
+                        }
                         disabled={!employment.officeDivisionId}
                       >
                         <option value="">All districts</option>
@@ -128,25 +154,58 @@ export default function EmploymentStep({ data, setData }) {
                         ))}
                       </select>
                     </div>
+                    <div className="field" style={{ marginBottom: 0 }}>
+                      <label>Upazila</label>
+                      <select
+                        value={employment.officeUpazilaId || ""}
+                        onChange={(e) => setEmployment({ officeUpazilaId: e.target.value, officeId: "", officeName: "" })}
+                        disabled={!employment.officeDistrictId}
+                      >
+                        <option value="">All upazilas</option>
+                        {upazilas.map((u) => (
+                          <option key={u.id} value={u.id}>{u.nameBn}</option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
 
-                  <div className="field">
-                    <label>Office name</label>
-                    <select value={employment.officeId || ""} onChange={selectOffice} required>
-                      <option value="">
-                        {officeOptions.length ? `Select office (${officeOptions.length} found)` : "No offices found for this area"}
-                      </option>
-                      {officeOptions.map((h) => (
-                        <option key={h.id} value={h.id}>
-                          {h.nameBn} — {h.facilityType}
+                  {!employment.officeManualEntry ? (
+                    <div className="field">
+                      <label>Office name</label>
+                      <select value={employment.officeId || ""} onChange={selectOffice} required>
+                        <option value="">
+                          {officeOptions.length ? `Select office (${officeOptions.length} found)` : "No offices found for this area"}
                         </option>
-                      ))}
-                    </select>
-                    <p className="helper-text">
-                      Narrow by division/district above if the list is long. Can't find your office? Not every
-                      facility resolves to a district in our dataset — pick "Other" above and type it in instead.
-                    </p>
-                  </div>
+                        {officeOptions.map((h) => (
+                          <option key={h.id} value={h.id}>
+                            {h.nameBn} — {h.facilityType}
+                          </option>
+                        ))}
+                      </select>
+                      <p className="helper-text">
+                        Narrow by division/district/upazila above if the list is long.{" "}
+                        <button type="button" className="link-button" onClick={toggleManualEntry}>
+                          Can't find your office? Enter it manually.
+                        </button>
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="field">
+                      <label>Office name</label>
+                      <input
+                        type="text"
+                        value={employment.officeName || ""}
+                        onChange={(e) => setEmployment({ officeName: e.target.value })}
+                        placeholder="Type your office/facility name"
+                        required
+                      />
+                      <p className="helper-text">
+                        <button type="button" className="link-button" onClick={toggleManualEntry}>
+                          Pick from the list instead
+                        </button>
+                      </p>
+                    </div>
+                  )}
                 </>
               )}
 

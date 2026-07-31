@@ -190,6 +190,41 @@ a {
   gap: 14px;
 }
 
+.field-row-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 14px;
+}
+
+@media (max-width: 560px) {
+  .field-row,
+  .field-row-3 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Unified select styling — used to be two disconnected rule sets (.field
+   select and .directory-filters select) that both fell back to each
+   browser's native dropdown chrome, so the arrow/height/disabled look
+   differed across the app (and wasn't styled at all on selects that had no
+   wrapper class). This one rule covers every <select> consistently. */
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9'%3E%3Cpath d='M1 1L7 7L13 1' stroke='%230b3d2e' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 38px !important;
+  cursor: pointer;
+}
+
+select:disabled {
+  background-color: #f3f1ea;
+  color: #9a927e;
+  cursor: not-allowed;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9'%3E%3Cpath d='M1 1L7 7L13 1' stroke='%23bdb6a4' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
 .btn {
   width: 100%;
   padding: 13px 20px;
@@ -507,16 +542,114 @@ a {
   cursor: pointer;
 }
 
+.link-button {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--coral);
+  font-size: inherit;
+  font-family: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+
+
+/* ---------- My Profile (view / edit) ---------- */
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.profile-header-name {
+  font-size: 21px;
+  margin-bottom: 4px;
+}
+
+.profile-header-meta {
+  color: #8a8270;
+  font-size: 13.5px;
+}
+
+.profile-header-actions {
+  margin-left: auto;
+}
+
+.profile-section {
+  margin-bottom: 30px;
+  padding-bottom: 26px;
+  border-bottom: 1.5px solid var(--line);
+}
+
+.profile-section:last-of-type {
+  border-bottom: none;
+}
+
+.profile-section h3 {
+  font-size: 12.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #8a8270;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.profile-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px 24px;
+}
+
+@media (max-width: 560px) {
+  .profile-info-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.profile-info-label {
+  display: block;
+  font-size: 12px;
+  color: #8a8270;
+  margin-bottom: 3px;
+}
+
+.profile-info-value {
+  font-size: 14.5px;
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.profile-edit-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.profile-edit-actions .btn,
+.profile-edit-actions .btn-ghost {
+  width: auto;
+}
+
 /* ---------- Directory ---------- */
 
 .directory-filters {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   gap: 10px;
   margin-bottom: 24px;
 }
 
-@media (max-width: 800px) {
+@media (max-width: 900px) {
+  .directory-filters { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 560px) {
   .directory-filters { grid-template-columns: 1fr 1fr; }
 }
 
@@ -528,10 +661,95 @@ a {
   font-size: 13.5px;
 }
 
+/* ----- Desktop / tablet: table ----- */
+
+.directory-table-wrap {
+  display: block;
+  overflow-x: auto;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--white);
+}
+
+.directory-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+
+.directory-table th {
+  text-align: left;
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #8a8270;
+  padding: 12px 14px;
+  border-bottom: 1.5px solid var(--line);
+  white-space: nowrap;
+}
+
+.directory-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--ivory-dim);
+  vertical-align: middle;
+}
+
+.directory-table tr:last-child td {
+  border-bottom: none;
+}
+
+.directory-row-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+}
+
+.directory-row-name {
+  font-weight: 700;
+  color: var(--forest);
+  white-space: nowrap;
+}
+
+.directory-row-sub {
+  font-size: 12px;
+  color: #8a8270;
+  margin-top: 1px;
+}
+
+.directory-row-location {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #6b6455;
+}
+
+.directory-row-contact {
+  display: flex;
+  gap: 10px;
+  color: #6b6455;
+}
+
+/* ----- Mobile: cards (Directory tab only — always-narrow media query,
+   distinct from the plain .directory-grid used by the Favorites tab, which
+   has no table alternative and should always show as a grid) ----- */
+
 .directory-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 14px;
+}
+
+.directory-grid-mobile {
+  display: none;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+@media (max-width: 800px) {
+  .directory-table-wrap { display: none; }
+  .directory-grid-mobile { display: grid; grid-template-columns: 1fr; }
 }
 
 .directory-card {
@@ -539,35 +757,102 @@ a {
   border: 1.5px solid var(--line);
   border-radius: var(--radius);
   padding: 16px;
-  display: flex;
-  gap: 12px;
   position: relative;
+}
+
+.directory-card-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.directory-card-top > div:nth-child(2) {
+  flex: 1;
+  min-width: 0;
 }
 
 .directory-card-name {
   font-weight: 700;
-  font-size: 14.5px;
+  font-size: 15px;
   color: var(--forest);
+  margin-bottom: 5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .directory-card-meta {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
   font-size: 12.5px;
   color: #6b6455;
+  margin-top: 6px;
+}
+
+.directory-card-meta svg {
+  flex-shrink: 0;
   margin-top: 2px;
+  color: var(--coral);
 }
 
 .favorite-btn {
-  position: absolute;
-  top: 10px;
-  right: 10px;
   background: none;
   border: none;
-  font-size: 18px;
   color: var(--line);
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  padding: 4px;
 }
 
 .favorite-btn.active { color: var(--coral); }
+
+.card-favorite-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+}
+
+/* Department chip: distinct light background per department (see
+   DEPARTMENT_COLORS in DirectoryTab.jsx), highlighted text. */
+.dept-chip {
+  display: inline-block;
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 999px;
+}
+
+/* Blood drop badge: teardrop shape with the blood group lettering centered
+   inside it, used on both the mobile card and the desktop table's Blood column. */
+.blood-drop {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.blood-drop svg {
+  position: absolute;
+  inset: 0;
+}
+
+.blood-drop svg path {
+  fill: var(--coral);
+}
+
+.blood-drop-label {
+  position: relative;
+  z-index: 1;
+  color: var(--white);
+  font-weight: 800;
+  font-size: 9.5px;
+  margin-top: 5px;
+  letter-spacing: -0.02em;
+}
 
 /* ---------- Admin panel ---------- */
 
