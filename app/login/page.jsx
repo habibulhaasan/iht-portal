@@ -1,14 +1,13 @@
+// File: app/login/page.jsx
 "use client";
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../../lib/firebase";
 import { syncSessionCookie } from "../../lib/sessionCookie";
 
 export default function LoginPage() {
-  const router = useRouter();
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -22,10 +21,18 @@ export default function LoginPage() {
     try {
       const cred = await signInWithEmailAndPassword(auth, form.email, form.password);
       await syncSessionCookie(cred.user);
-      router.replace("/dashboard"); // RouteGuard will bounce to /onboarding if incomplete
+
+      // Hard navigation on purpose (not router.replace / router.push).
+      // middleware.js checks for the session cookie on every request, but
+      // Next's client-side Router Cache can still be holding an earlier
+      // redirect-to-/login response for "/dashboard" from before you were
+      // authenticated (e.g. from a prefetch while logged out). A soft
+      // navigation can serve that stale cached redirect and bounce straight
+      // back here — the "blink". A full page load bypasses that cache
+      // entirely and always asks the server fresh.
+      window.location.href = "/dashboard"; // RouteGuard sends to /onboarding if incomplete
     } catch (err) {
       setError(friendlyError(err.code));
-    } finally {
       setBusy(false);
     }
   };

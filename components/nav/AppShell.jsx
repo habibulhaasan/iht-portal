@@ -1,3 +1,4 @@
+// File: components/nav/AppShell.jsx
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -38,7 +39,11 @@ export default function AppShell({ children }) {
   const handleLogout = async () => {
     await clearSessionCookie();
     await signOut(auth);
-    router.replace("/login");
+
+    // Hard navigation, not router.replace — same reasoning as the login/
+    // register fix: avoids Next's client Router Cache serving a stale
+    // authenticated response for a route visited right before logging out.
+    window.location.href = "/login";
   };
 
   return (

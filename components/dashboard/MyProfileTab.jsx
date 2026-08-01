@@ -52,9 +52,14 @@ export default function MyProfileTab() {
   if (!profile) return <p className="helper-text">Loading your profile…</p>;
 
   const startEditing = () => {
-    setFormData(profile);
-    setEditing(true);
-    setSavedMsg("");
+  setFormData({
+    ...profile,
+    photo: profile.photo ?? { base64: null, useDefault: true },
+    employment: profile.employment ?? {},
+    visibility: profile.visibility ?? { phone: false, email: false, currentAddress: false, employment: false },
+  });
+  setEditing(true);
+  setSavedMsg("");
   };
 
   const cancelEditing = () => {
@@ -83,21 +88,21 @@ export default function MyProfileTab() {
   const removePhoto = () => setFormData((d) => ({ ...d, photo: { base64: null, useDefault: true } }));
 
   const handleSave = async () => {
-    setSaving(true);
-    setSavedMsg("");
-    await updateDoc(doc(db, "profiles", user.uid), {
-      currentAddress: formData.currentAddress,
-      phone: formData.phone,
-      employment: formData.employment,
-      visibility: formData.visibility,
-      photo: formData.photo,
-      updatedAt: serverTimestamp(),
-    });
-    setSaving(false);
-    setEditing(false);
-    setFormData(null);
-    setSavedMsg("Saved!");
-    setTimeout(() => setSavedMsg(""), 2500);
+  setSaving(true);
+  setSavedMsg("");
+  await updateDoc(doc(db, "profiles", user.uid), {
+    currentAddress: formData.currentAddress ?? null,
+    phone: formData.phone ?? null,
+    employment: formData.employment ?? null,
+    visibility: formData.visibility ?? null,
+    photo: formData.photo ?? { base64: null, useDefault: true },
+    updatedAt: serverTimestamp(),
+  });
+  setSaving(false);
+  setEditing(false);
+  setFormData(null);
+  setSavedMsg("Saved!");
+  setTimeout(() => setSavedMsg(""), 2500);
   };
 
   const photoSrc =

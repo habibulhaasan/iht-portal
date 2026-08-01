@@ -1,15 +1,14 @@
+// File: app/register/page.jsx
 "use client";
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "../../lib/firebase";
 import { syncSessionCookie } from "../../lib/sessionCookie";
 
 export default function RegisterPage() {
-  const router = useRouter();
   const [form, setForm] = useState({ name: "", email: "", password: "", confirm: "" });
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -52,7 +51,11 @@ export default function RegisterPage() {
       );
 
       await syncSessionCookie(cred.user);
-      router.replace("/onboarding");
+
+      // Hard navigation, not router.replace — see the comment in
+      // app/login/page.jsx for why: avoids Next's client Router Cache
+      // serving a stale pre-signup redirect for /onboarding.
+      window.location.href = "/onboarding";
     } catch (err) {
       setError(friendlyError(err.code));
     } finally {

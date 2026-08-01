@@ -23,16 +23,16 @@ export default function RouteGuard({ children }) {
     }
 
     if (user && userDoc) {
-      const incomplete = !userDoc.profileComplete;
-      if (incomplete && pathname !== "/onboarding") {
-        router.replace("/onboarding");
-        return;
-      }
-      if (!incomplete && (isPublic || pathname === "/onboarding")) {
-        router.replace("/dashboard");
-        return;
-      }
+    const incomplete = !userDoc.profileComplete;
+    if (incomplete && pathname !== "/onboarding") {
+      router.replace("/onboarding");
+      return;
     }
+    if (!incomplete && (isPublic || pathname === "/onboarding")) {
+      router.replace("/dashboard");
+      return;
+    }
+  }
   }, [user, userDoc, loading, pathname, router]);
 
   if (loading) {
