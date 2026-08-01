@@ -20,7 +20,7 @@ export default function NotificationsTab() {
   };
 
   return (
-    <div>
+    <div className="notifications-tab">
       <div className="notifications-header">
         <h2>Notifications</h2>
         {unreadCount > 0 && (

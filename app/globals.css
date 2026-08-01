@@ -1535,6 +1535,10 @@ select:disabled {
   font-family: "Hind Siliguri", var(--font-body), sans-serif;
 }
 
+.directory-tab, .notifications-tab, .favorites-tab {
+  font-family: "Hind Siliguri", var(--font-body), sans-serif;
+}
+
 .about-tab h2,
 .about-tab h3 {
   font-family: "Hind Siliguri", var(--font-body), sans-serif;
@@ -2230,4 +2234,35 @@ select:disabled {
   }
 
   .more-sheet-item .nav-badge { margin-left: auto; }
+}
+
+/* ---------- Directory: highlighted blood donation info ---------- */
+.directory-row-donation {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: #fdeeea;
+  color: var(--coral-dark, #e2532f);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.directory-row-donation svg {
+  flex-shrink: 0;
+  color: var(--coral, #ff6b4a);
+}
+
+.directory-card-donation {
+  background: #fdeeea;
+  border-radius: 8px;
+  padding: 7px 10px;
+  color: var(--coral-dark, #e2532f);
+  font-weight: 600;
+}
+
+.directory-card-donation svg {
+  color: var(--coral, #ff6b4a);
 }

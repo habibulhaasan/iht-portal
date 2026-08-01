@@ -69,6 +69,8 @@ const INITIAL_FILTERS = {
   department: "",
 };
 
+
+
 export default function DirectoryTab() {
   const { user } = useAuth();
   const { settings: adminSettings } = useDirectorySettings();
@@ -145,7 +147,7 @@ export default function DirectoryTab() {
   const showCol = (key) => adminSettings[key] !== false;
 
   return (
-    <div>
+    <div className="directory-tab">
       <h2>Directory</h2>
       <p className="step-sub">{filtered.length} people match your filters.</p>
 
@@ -285,8 +287,7 @@ function useVisibleProfile(profile, adminSettings) {
     statusLabel: show.status ? employmentStatusLabel(profile.employment) : "",
   };
 }
-
-function DirectoryRow({ profile, adminSettings, isFavorite, onToggleFavorite }) {
+export function DirectoryRow({ profile, adminSettings, isFavorite, onToggleFavorite }) {
   const { show, avatar, donationInfo, locationLabel, officeAddress, officeName, statusLabel } = useVisibleProfile(profile, adminSettings);
 
   return (
@@ -391,12 +392,6 @@ export function DirectoryCard({ profile, adminSettings, isFavorite, onToggleFavo
       </div>
 
       <div className="directory-card-body">
-        {adminSettings.donation !== false && donationInfo && (
-          <div className="directory-card-meta directory-card-donation">
-            <Droplet size={14} />
-            <span>Last donation: {donationInfo.lastDateLabel} · Total: {donationInfo.count}</span>
-          </div>
-        )}
         {show.status && statusLabel && statusLabel !== "—" && (
           <div className="directory-card-meta">
             <GraduationCap size={14} />
@@ -429,6 +424,12 @@ export function DirectoryCard({ profile, adminSettings, isFavorite, onToggleFavo
           <div className="directory-card-meta">
             <Phone size={14} />
             <span>{profile.phone}</span>
+          </div>
+        )}
+        {adminSettings.donation !== false && donationInfo && (
+          <div className="directory-card-meta directory-card-donation">
+            <Droplet size={14} />
+            <span>Last Blood donation: {donationInfo.lastDateLabel} · Total: {donationInfo.count}</span>
           </div>
         )}
       </div>

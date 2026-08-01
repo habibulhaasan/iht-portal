@@ -4,9 +4,12 @@ import { useEffect, useState } from "react";
 import { collection, onSnapshot, doc, getDoc, deleteDoc } from "firebase/firestore";
 import { db } from "../../lib/firebase";
 import { useAuth } from "../../context/AuthContext";
+import { useDirectorySettings } from "../../lib/directorySettings";
+import { DirectoryRow, DirectoryCard } from "./DirectoryTab";
 
 export default function FavoritesTab() {
   const { user } = useAuth();
+  const { settings: adminSettings } = useDirectorySettings();
   const [favorites, setFavorites] = useState([]);
 
   useEffect(() => {
@@ -26,22 +29,63 @@ export default function FavoritesTab() {
 
   const removeFavorite = async (id) => deleteDoc(doc(db, "users", user.uid, "favorites", id));
 
+  const showCol = (key) => adminSettings[key] !== false;
+
   return (
     <div>
       <h2>Favorites</h2>
-      <p className="step-sub">People you've bookmarked for quick access.</p>
-      <div className="directory-grid">
+      <p className="step-sub">{favorites.length} people you've bookmarked for quick access.</p>
+
+      {favorites.length === 0 && (
+        <p className="helper-text">No favorites yet — star someone from the Directory tab.</p>
+      )}
+
+      {/* Same table/card split as Directory — reusing DirectoryRow/
+          DirectoryCard directly means this tab automatically stays
+          consistent with Directory's field visibility, admin settings,
+          avatars, and donation info, with no duplicated logic to drift out
+          of sync. */}
+      <div className="directory-table-wrap">
+        <table className="directory-table">
+          <thead>
+            <tr>
+              <th></th>
+              <th>Name</th>
+              {showCol("bloodGroup") && <th>Blood</th>}
+              {showCol("donation") && <th>Blood Donation</th>}
+              {showCol("department") && <th>Department</th>}
+              {showCol("session") && <th>Session</th>}
+              {showCol("status") && <th>Status</th>}
+              {showCol("location") && <th>Location</th>}
+              {showCol("officeAddress") && <th>Office address</th>}
+              {(showCol("phone") || showCol("email")) && <th>Contact</th>}
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {favorites.map((p) => (
+              <DirectoryRow
+                key={p.id}
+                profile={p}
+                adminSettings={adminSettings}
+                isFavorite={true}
+                onToggleFavorite={() => removeFavorite(p.id)}
+              />
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="directory-grid-mobile">
         {favorites.map((p) => (
-          <div className="directory-card" key={p.id}>
-            <div className="directory-card-body">
-              <div className="directory-card-name">{p.name}</div>
-              <div className="directory-card-meta">{p.department} · {p.session}</div>
-              <div className="directory-card-meta">🩸 {p.bloodGroup}</div>
-            </div>
-            <button className="favorite-btn active" onClick={() => removeFavorite(p.id)}>★</button>
-          </div>
+          <DirectoryCard
+            key={p.id}
+            profile={p}
+            adminSettings={adminSettings}
+            isFavorite={true}
+            onToggleFavorite={() => removeFavorite(p.id)}
+          />
         ))}
-        {favorites.length === 0 && <p className="helper-text">No favorites yet — star someone from the Directory tab.</p>}
       </div>
     </div>
   );
