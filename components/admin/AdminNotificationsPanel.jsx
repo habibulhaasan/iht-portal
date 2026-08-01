@@ -6,11 +6,24 @@ import { Send, Megaphone, User as UserIcon } from "lucide-react";
 import { db } from "../../lib/firebase";
 import { useAuth } from "../../context/AuthContext";
 import { sendNotification } from "../../lib/notifications";
+import { defaultAvatarFor } from "../../lib/photoUtils";
 
 function timeAgo(ts) {
   const date = ts?.toDate?.();
   if (!date) return "just now";
   return date.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+}
+
+function memberPhoto(p) {
+  return p.photo?.useDefault === false && p.photo?.base64 ? p.photo.base64 : defaultAvatarFor(p.gender);
+}
+
+// department + session is the identifying pair used everywhere else in the
+// app (directory rows, admin list items) — reusing it here instead of email
+// keeps member identification consistent across the whole admin UI.
+function memberSubline(p) {
+  const parts = [p.department, p.session].filter(Boolean);
+  return parts.length ? parts.join(" · ") : p.email;
 }
 
 export default function AdminNotificationsPanel() {
@@ -33,9 +46,6 @@ export default function AdminNotificationsPanel() {
   }, []);
 
   useEffect(() => {
-    // Composite index needed: notifications (createdAt DESC) — Firestore
-    // will offer a one-click link in the console error the first time this
-    // runs, same as AuditHistory's query.
     const q = query(collection(db, "notifications"), orderBy("createdAt", "desc"), limit(30));
     const unsub = onSnapshot(q, (snap) => setHistory(snap.docs.map((d) => ({ id: d.id, ...d.data() }))));
     return () => unsub();
@@ -100,7 +110,11 @@ export default function AdminNotificationsPanel() {
             <label>Member</label>
             {targetProfile ? (
               <div className="notify-selected-member">
-                <span>{targetProfile.name} <span className="notify-selected-email">· {targetProfile.email}</span></span>
+                <img src={memberPhoto(targetProfile)} alt={targetProfile.name} className="notify-member-avatar" />
+                <div className="notify-selected-member-text">
+                  <span className="notify-selected-name">{targetProfile.name || "(no name)"}</span>
+                  <span className="notify-selected-sub">{memberSubline(targetProfile)}</span>
+                </div>
                 <button type="button" className="link-button" onClick={() => setTargetUid("")}>Change</button>
               </div>
             ) : (
@@ -120,8 +134,11 @@ export default function AdminNotificationsPanel() {
                         className="notify-member-result"
                         onClick={() => { setTargetUid(p.id); setMemberSearch(""); }}
                       >
-                        <span>{p.name || "(no name)"}</span>
-                        <span className="notify-selected-email">{p.email}</span>
+                        <img src={memberPhoto(p)} alt={p.name} className="notify-member-avatar" />
+                        <div className="notify-member-result-text">
+                          <span className="notify-selected-name">{p.name || "(no name)"}</span>
+                          <span className="notify-selected-sub">{memberSubline(p)}</span>
+                        </div>
                       </button>
                     ))}
                     {filteredMembers.length === 0 && <p className="helper-text">No matches.</p>}
