@@ -1,11 +1,12 @@
+// File: components/dashboard/DirectoryTab.jsx
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { collection, onSnapshot, doc, setDoc, deleteDoc, serverTimestamp } from "firebase/firestore";
-import { Star, Phone, Mail, MapPin, Briefcase, GraduationCap } from "lucide-react";
+import { Star, Phone, Mail, MapPin, Briefcase, GraduationCap, Droplet, RotateCcw } from "lucide-react";
 import { db } from "../../lib/firebase";
 import { useAuth } from "../../context/AuthContext";
-import { BD_DIVISIONS, getDistrictsByDivision, getAllDistricts, getAddressLabel } from "../../lib/bdData";
+import { BD_DIVISIONS, getDistrictsByDivision, getUpazilasByDistrict, getAddressLabel } from "../../lib/bdData";
 import { resolveEmploymentAddress } from "../../lib/hospitalData";
 import { defaultAvatarFor } from "../../lib/photoUtils";
 import { useDirectorySettings, isFieldVisible } from "../../lib/directorySettings";
@@ -58,19 +59,22 @@ function employmentStatusLabel(e) {
   return "—";
 }
 
+const INITIAL_FILTERS = {
+  search: "",
+  divisionId: "",
+  districtId: "",
+  upazilaId: "",
+  bloodGroup: "",
+  jobType: "",
+  department: "",
+};
+
 export default function DirectoryTab() {
   const { user } = useAuth();
   const { settings: adminSettings } = useDirectorySettings();
   const [profiles, setProfiles] = useState([]);
   const [favoriteIds, setFavoriteIds] = useState(new Set());
-  const [filters, setFilters] = useState({
-    divisionId: "",
-    districtId: "",
-    bloodGroup: "",
-    jobType: "",
-    department: "",
-    session: "",
-  });
+  const [filters, setFilters] = useState(INITIAL_FILTERS);
 
   useEffect(() => {
     const unsub = onSnapshot(collection(db, "profiles"), (snap) => {
@@ -96,16 +100,28 @@ export default function DirectoryTab() {
     }
   };
 
-  const districtsForFilter = filters.divisionId ? getDistrictsByDivision(filters.divisionId) : getAllDistricts();
+  // Strict cascade: district list is empty until a division is picked, and
+  // upazila list is empty until a district is picked — mirrors AddressStep.
+  const districtsForFilter = filters.divisionId ? getDistrictsByDivision(filters.divisionId) : [];
+  const upazilasForFilter = filters.districtId ? getUpazilasByDistrict(filters.districtId) : [];
 
   const filtered = useMemo(() => {
+    const q = filters.search.trim().toLowerCase();
+
     return profiles.filter((p) => {
       if (p.id === user?.uid) return false;
+      if (q) {
+        // One search box, matches either — case-insensitive substring on
+        // both, so "2018" or a partial name both work from the same field.
+        const nameMatch = p.name?.toLowerCase().includes(q);
+        const sessionMatch = p.session?.toLowerCase().includes(q);
+        if (!nameMatch && !sessionMatch) return false;
+      }
       if (filters.divisionId && p.currentAddress?.divisionId !== filters.divisionId) return false;
       if (filters.districtId && p.currentAddress?.districtId !== filters.districtId) return false;
+      if (filters.upazilaId && p.currentAddress?.upazilaId !== filters.upazilaId) return false;
       if (filters.bloodGroup && p.bloodGroup !== filters.bloodGroup) return false;
       if (filters.department && p.department !== filters.department) return false;
-      if (filters.session && p.session !== filters.session) return false;
       if (filters.jobType && p.employment?.status !== filters.jobType) return false;
       return true;
     });
@@ -115,8 +131,12 @@ export default function DirectoryTab() {
     setFilters((f) => ({
       ...f,
       [key]: e.target.value,
-      ...(key === "divisionId" ? { districtId: "" } : {}),
+      ...(key === "divisionId" ? { districtId: "", upazilaId: "" } : {}),
+      ...(key === "districtId" ? { upazilaId: "" } : {}),
     }));
+
+  const resetFilters = () => setFilters(INITIAL_FILTERS);
+  const hasActiveFilters = JSON.stringify(filters) !== JSON.stringify(INITIAL_FILTERS);
 
   // A column only ever appears if the admin allows that field at all —
   // whether it's also member-controlled just decides what each *row* shows
@@ -130,13 +150,23 @@ export default function DirectoryTab() {
       <p className="step-sub">{filtered.length} people match your filters.</p>
 
       <div className="directory-filters">
+        <input
+          type="text"
+          placeholder="Search by name or session"
+          value={filters.search}
+          onChange={setFilter("search")}
+        />
         <select value={filters.divisionId} onChange={setFilter("divisionId")}>
           <option value="">All divisions</option>
-          {BD_DIVISIONS.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+          {BD_DIVISIONS.map((d) => <option key={d.id} value={d.id}>{d.nameBn || d.name}</option>)}
         </select>
-        <select value={filters.districtId} onChange={setFilter("districtId")}>
+        <select value={filters.districtId} onChange={setFilter("districtId")} disabled={!filters.divisionId}>
           <option value="">All districts</option>
-          {districtsForFilter.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+          {districtsForFilter.map((d) => <option key={d.id} value={d.id}>{d.nameBn || d.name}</option>)}
+        </select>
+        <select value={filters.upazilaId} onChange={setFilter("upazilaId")} disabled={!filters.districtId}>
+          <option value="">All upazilas</option>
+          {upazilasForFilter.map((u) => <option key={u.id} value={u.id}>{u.nameBn || u.name}</option>)}
         </select>
         <select value={filters.bloodGroup} onChange={setFilter("bloodGroup")}>
           <option value="">All blood groups</option>
@@ -151,7 +181,15 @@ export default function DirectoryTab() {
           <option value="studying">Studying</option>
           <option value="job">Job</option>
         </select>
-        <input type="text" placeholder="Session e.g. 2018-2019" value={filters.session} onChange={setFilter("session")} />
+        <button
+          type="button"
+          className="btn-ghost btn directory-reset-btn"
+          onClick={resetFilters}
+          disabled={!hasActiveFilters}
+        >
+          <RotateCcw size={14} />
+          Reset filters
+        </button>
       </div>
 
       {filtered.length === 0 && <p className="helper-text">No one matches these filters yet.</p>}
@@ -163,6 +201,7 @@ export default function DirectoryTab() {
               <th></th>
               <th>Name</th>
               {showCol("bloodGroup") && <th>Blood</th>}
+              {showCol("donation") && <th>Blood Donation</th>}
               {showCol("department") && <th>Department</th>}
               {showCol("session") && <th>Session</th>}
               {showCol("status") && <th>Status</th>}
@@ -221,9 +260,25 @@ function useVisibleProfile(profile, adminSettings) {
     email: isFieldVisible("email", adminSettings, profile),
   };
 
+  // Donation count/date already live on the profile doc (maintained
+  // server-side by the recalcDonationStats Cloud Function) — just decide
+  // whether there's anything to show, "if available" per the member's
+  // actual log rather than an admin/member consent toggle like the fields
+  // above.
+  const donationCount = profile.donationCount || 0;
+  const rawLastDonation = profile.lastDonationDate;
+  const lastDonationDate = rawLastDonation
+    ? (rawLastDonation.toDate ? rawLastDonation.toDate() : new Date(rawLastDonation))
+    : null;
+  const donationInfo =
+    adminSettings.donation !== false && donationCount > 0
+      ? { count: donationCount, lastDateLabel: lastDonationDate ? lastDonationDate.toLocaleDateString() : "—" }
+      : null;
+
   return {
     avatar,
     show,
+    donationInfo,
     locationLabel: show.location ? getAddressLabel(profile.currentAddress, "bn") : "",
     officeAddress: show.officeAddress ? resolveEmploymentAddress(profile.employment) : "",
     officeName: show.officeAddress ? profile.employment?.officeName : "",
@@ -232,7 +287,7 @@ function useVisibleProfile(profile, adminSettings) {
 }
 
 function DirectoryRow({ profile, adminSettings, isFavorite, onToggleFavorite }) {
-  const { show, avatar, locationLabel, officeAddress, officeName, statusLabel } = useVisibleProfile(profile, adminSettings);
+  const { show, avatar, donationInfo, locationLabel, officeAddress, officeName, statusLabel } = useVisibleProfile(profile, adminSettings);
 
   return (
     <tr className="directory-row">
@@ -242,6 +297,18 @@ function DirectoryRow({ profile, adminSettings, isFavorite, onToggleFavorite }) 
       <td className="directory-row-name">{profile.name}</td>
       {show.bloodGroup !== undefined && adminSettings.bloodGroup !== false && (
         <td>{show.bloodGroup ? <BloodDropBadge group={profile.bloodGroup} size={32} /> : "—"}</td>
+      )}
+      {adminSettings.donation !== false && (
+        <td>
+          {donationInfo ? (
+            <span className="directory-row-donation">
+              <Droplet size={13} />
+              Last: {donationInfo.lastDateLabel} · Total: {donationInfo.count}
+            </span>
+          ) : (
+            "—"
+          )}
+        </td>
       )}
       {adminSettings.department !== false && (
         <td>{show.department ? <DepartmentChip department={profile.department} /> : "—"}</td>
@@ -299,7 +366,7 @@ function DirectoryRow({ profile, adminSettings, isFavorite, onToggleFavorite }) 
 }
 
 export function DirectoryCard({ profile, adminSettings, isFavorite, onToggleFavorite }) {
-  const { show, avatar, officeAddress, officeName, statusLabel } = useVisibleProfile(profile, adminSettings);
+  const { show, avatar, donationInfo, officeAddress, officeName, statusLabel } = useVisibleProfile(profile, adminSettings);
 
   return (
     <div className="directory-card">
@@ -324,6 +391,12 @@ export function DirectoryCard({ profile, adminSettings, isFavorite, onToggleFavo
       </div>
 
       <div className="directory-card-body">
+        {adminSettings.donation !== false && donationInfo && (
+          <div className="directory-card-meta directory-card-donation">
+            <Droplet size={14} />
+            <span>Last donation: {donationInfo.lastDateLabel} · Total: {donationInfo.count}</span>
+          </div>
+        )}
         {show.status && statusLabel && statusLabel !== "—" && (
           <div className="directory-card-meta">
             <GraduationCap size={14} />

@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { doc, updateDoc, serverTimestamp } from "firebase/firestore";
+import { useEffect, useMemo, useState } from "react";
+import { collection, doc, onSnapshot, updateDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../../lib/firebase";
 import { useAuth } from "../../context/AuthContext";
 import { logProfileEdits } from "../../lib/auditLog";
+import { getLastDonation, sortDonations } from "../../lib/donationUtils";
 import { BD_DIVISIONS, getDistrictsByDivision, getUpazilasByDistrict } from "../../lib/bdData";
 import { HOSPITALS } from "../../lib/hospitalData";
 import AuditHistory from "./AuditHistory";
@@ -298,6 +299,28 @@ export default function AdminEditForm({ profile }) {
   const [saving, setSaving] = useState(false);
   const [savedMsg, setSavedMsg] = useState("");
 
+  // profile.donationCount / profile.lastDonationDate are meant to be kept in
+  // sync by recalcDonationStats, a Cloud Function — which needs the Blaze
+  // plan and never runs here, so those two fields are permanently stale/zero.
+  // Reading the subcollection directly (same source DonationsTab.jsx uses)
+  // instead of trusting those fields fixes the sync issue for good, with no
+  // dependency on Cloud Functions at all.
+  const [donations, setDonations] = useState([]);
+  useEffect(() => {
+    const unsub = onSnapshot(collection(db, "profiles", profile.id, "bloodDonations"), (snap) => {
+      setDonations(
+        snap.docs.map((d) => ({
+          id: d.id,
+          ...d.data(),
+          date: d.data().date?.toDate?.() ?? new Date(d.data().date),
+        }))
+      );
+    });
+    return () => unsub();
+  }, [profile.id]);
+
+  const lastDonation = useMemo(() => getLastDonation(donations), [donations]);
+
   const field = (key) => (e) => setDraft((d) => ({ ...d, [key]: e.target.value }));
   const pick = (key, value) => () => setDraft((d) => ({ ...d, [key]: value }));
 
@@ -451,14 +474,29 @@ export default function AdminEditForm({ profile }) {
       <div className="field-row">
         <div className="field">
           <label>Total donations</label>
-          <div className="readonly-value">{profile.donationCount ?? 0}</div>
+          <div className="readonly-value">{donations.length}</div>
         </div>
         <div className="field">
           <label>Last donation date</label>
-          <div className="readonly-value">{profile.lastDonationDate || "—"}</div>
+          <div className="readonly-value">{lastDonation ? lastDonation.date.toLocaleDateString() : "—"}</div>
         </div>
       </div>
-      <p className="helper-text">Computed automatically from the member's donation log — not directly editable here.</p>
+      <p className="helper-text">
+        Live from this member's donation log, not directly editable here. (If this ever looks
+        out of sync with what they see in their own dashboard, it's the same live data — there's
+        no separate cached copy to drift.)
+      </p>
+
+      {sortDonations(donations).length > 0 && (
+        <ul className="donation-list" style={{ marginBottom: 20 }}>
+          {sortDonations(donations).map((d) => (
+            <li key={d.id}>
+              <span>{d.date.toLocaleDateString()}</span>
+              {d.note && <span className="donation-note">{d.note}</span>}
+            </li>
+          ))}
+        </ul>
+      )}
 
       <button className="btn" style={{ width: "auto" }} onClick={handleSave} disabled={saving}>
         {saving ? "Saving…" : "Save changes"}

@@ -1301,3 +1301,603 @@ select:disabled {
     background-color: var(--bg, #ffffff);
   }
 }
+
+/* File: app/globals.css (append) */
+
+/* ---------- Admin top-level tabs (Members / About) ---------- */
+
+.admin-toplevel-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 16px 20px 0;
+  border-bottom: 1.5px solid var(--line);
+}
+
+.admin-toplevel-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  padding: 10px 16px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #8a8270;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1.5px;
+}
+
+.admin-toplevel-tab.active {
+  color: var(--forest);
+  border-bottom-color: var(--coral);
+}
+
+/* ---------- Pagination ---------- */
+
+.admin-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 14px 0 4px;
+  border-top: 1px solid var(--line);
+  margin-top: 10px;
+}
+
+.admin-page-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: 1.5px solid var(--line);
+  background: var(--white);
+  color: var(--forest);
+  cursor: pointer;
+}
+
+.admin-page-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.admin-page-label {
+  font-size: 12px;
+  color: #8a8270;
+  white-space: nowrap;
+}
+
+/* ---------- Mobile: list <-> detail as two full-width views ---------- */
+
+.admin-back-btn {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: var(--forest);
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 16px;
+  padding: 0;
+}
+
+@media (max-width: 800px) {
+  .admin-columns {
+    grid-template-columns: 1fr;
+  }
+  .admin-list-pane {
+    border-right: none;
+  }
+  /* Default: show the list, hide the detail pane */
+  .admin-edit-pane {
+    display: none;
+  }
+  /* Once a member is selected: flip to showing only the detail pane,
+     with a way back to the list — avoids the old side-by-side squeeze
+     that made both panes unusably narrow on small screens. */
+  .admin-columns.showing-detail .admin-list-pane {
+    display: none;
+  }
+  .admin-columns.showing-detail .admin-edit-pane {
+    display: block;
+  }
+  .admin-back-btn {
+    display: flex;
+  }
+}
+
+/* ---------- About tab ---------- */
+
+.about-tab {
+  padding: 24px 20px 40px;
+  max-width: 640px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.about-card {
+  background: var(--white);
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius);
+  padding: 20px 22px;
+}
+
+.about-card h2 {
+  font-size: 20px;
+  margin-bottom: 4px;
+}
+
+.about-card h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--forest);
+  margin-bottom: 12px;
+}
+
+.about-version {
+  font-size: 12px;
+  color: #9a927e;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.about-description {
+  font-size: 13.5px;
+  color: #4a4536;
+  line-height: 1.6;
+}
+
+.about-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.about-list li {
+  font-size: 13px;
+  color: #4a4536;
+  padding-left: 16px;
+  position: relative;
+}
+
+.about-list li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 7px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--coral);
+}
+
+.about-tech-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding-left: 16px;
+}
+
+.about-tech-label {
+  font-weight: 600;
+  color: var(--forest);
+}
+
+.about-tech-detail {
+  color: #9a927e;
+  text-align: right;
+}
+
+.about-dev-name {
+  font-weight: 700;
+  font-size: 14.5px;
+  color: var(--forest);
+  margin-bottom: 8px;
+}
+
+.about-dev-links {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.about-dev-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #4a4536;
+  text-decoration: none;
+}
+
+.about-dev-link:hover {
+  color: var(--coral-dark);
+}
+
+.about-security-note p {
+  font-size: 13px;
+  color: #6b6455;
+  line-height: 1.6;
+}
+
+.admin-shell {
+  min-height: 100vh;
+  background: var(--ivory, #faf7f0);
+  padding: 24px 28px;
+}
+
+.admin-toolbar {
+  margin-bottom: 20px;
+}
+
+.admin-columns {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 20px;
+  background: var(--white, #fff);
+  border: 1.5px solid var(--line, #e5e0d3);
+  border-radius: var(--radius, 12px);
+  min-height: 70vh;
+  overflow: hidden;
+}
+
+@media (max-width: 800px) {
+  .admin-shell { padding: 16px; }
+  .admin-columns { grid-template-columns: 1fr; }
+
+  /* Master-detail on mobile: only one pane visible at a time. Desktop
+     ignores this entirely — both panes stay side by side. */
+  .admin-columns:not(.showing-detail) .admin-edit-pane { display: none; }
+  .admin-columns.showing-detail .admin-list-pane { display: none; }
+
+  .admin-toolbar-hidden-mobile { display: none; }
+}
+
+.admin-back-btn {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--coral, #ff6b4a);
+  font-weight: 700;
+  font-size: 13.5px;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 800px) {
+  .admin-back-btn { display: inline-flex; }
+}
+
+/* ----- Filter bar (overview + dropdown filters with counts) ----- */
+
+.admin-filter-bar {
+  background: var(--white, #fff);
+  border: 1.5px solid var(--line, #e5e0d3);
+  border-radius: var(--radius, 12px);
+  padding: 16px 20px;
+}
+
+.admin-overview-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  color: #6b6455;
+  margin-bottom: 14px;
+}
+
+.admin-overview-line strong { color: var(--forest, #1f7a43); font-size: 15px; }
+.admin-overview-dot { opacity: 0.5; }
+
+.admin-overview-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: #6b6455;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.admin-filter-dropdowns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.admin-filter-dropdowns select {
+  padding: 9px 12px;
+  border: 1.5px solid var(--line, #e5e0d3);
+  border-radius: 8px;
+  font-size: 13px;
+  min-width: 150px;
+  flex: 1 1 150px;
+  background: var(--white, #fff);
+  color: inherit;
+}
+
+@media (max-width: 560px) {
+  .admin-filter-dropdowns select { flex: 1 1 100%; min-width: 0; }
+}
+
+.chip-clear {
+  background: var(--ivory-dim, #f1ebdd);
+  border: 1.5px solid var(--line, #e5e0d3);
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink, #2a2a2a);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+/* ----- Member list ----- */
+
+.admin-list-pane {
+  border-right: 1.5px solid var(--line, #e5e0d3);
+  padding: 24px 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-list-pane h1 {
+  font-size: 18px;
+  margin-bottom: 14px;
+}
+
+.admin-search {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1.5px solid var(--line, #e5e0d3);
+  border-radius: 8px;
+  font-size: 13.5px;
+  margin-bottom: 14px;
+}
+
+.admin-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.admin-list-item {
+  text-align: left;
+  background: var(--white, #fff);
+  border: 1.5px solid var(--line, #e5e0d3);
+  border-radius: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+
+.admin-list-item.active {
+  border-color: var(--coral, #ff6b4a);
+  box-shadow: 0 0 0 3px rgba(255, 107, 74, 0.12);
+}
+
+.admin-list-item-name {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--forest, #1f7a43);
+}
+
+.admin-list-item-meta {
+  font-size: 12px;
+  color: #8a8270;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1.5px solid var(--line, #e5e0d3);
+}
+
+.admin-pagination .btn-ghost.btn { width: auto; padding: 8px 14px; font-size: 12.5px; }
+.admin-pagination-status { font-size: 12px; color: #8a8270; white-space: nowrap; }
+
+.admin-edit-pane {
+  padding: 28px 32px;
+  max-width: 680px;
+  overflow-y: auto;
+}
+
+.admin-badge, .incomplete-badge {
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+.admin-badge { background: var(--forest, #1f7a43); color: var(--ivory, #faf7f0); }
+.incomplete-badge { background: #fdeeea; color: #a3401f; }
+
+.role-toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.role-badge {
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--ivory-dim, #f1ebdd);
+  color: var(--ink, #2a2a2a);
+}
+
+.role-badge.is-admin { background: var(--forest, #1f7a43); color: var(--ivory, #faf7f0); }
+
+.admin-form-section-title {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #8a8270;
+  margin: 28px 0 14px;
+  padding-top: 20px;
+  border-top: 1.5px solid var(--line, #e5e0d3);
+}
+
+.admin-form-section-title:first-of-type { margin-top: 0; padding-top: 0; border-top: none; }
+
+.readonly-value {
+  padding: 11px 13px;
+  background: var(--ivory-dim, #f1ebdd);
+  border: 1.5px solid var(--line, #e5e0d3);
+  border-radius: 8px;
+  font-size: 14px;
+  color: #6b6455;
+}
+
+.admin-address-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 560px) {
+  .admin-address-grid { grid-template-columns: 1fr; }
+}
+
+.address-fields-group {
+  margin-bottom: 20px;
+  padding: 14px;
+  background: var(--ivory-dim, #f1ebdd);
+  border-radius: 10px;
+}
+
+.address-group-label {
+  display: block;
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--forest, #1f7a43);
+  margin-bottom: 10px;
+}
+
+.admin-photo-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+/* ----- Directory visibility settings panel ----- */
+
+.admin-panel-section {
+  background: var(--white, #fff);
+  border: 1.5px solid var(--line, #e5e0d3);
+  border-radius: var(--radius, 12px);
+  padding: 20px;
+}
+
+.directory-settings-list {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.directory-settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--ivory-dim, #f1ebdd);
+}
+
+.directory-settings-row:last-child { border-bottom: none; }
+
+.directory-settings-label { font-weight: 600; font-size: 14px; }
+.directory-settings-sub { font-size: 12px; color: #8a8270; margin-top: 2px; }
+
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 22px;
+  flex-shrink: 0;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+
+.toggle-track {
+  position: absolute;
+  inset: 0;
+  background: var(--line, #e5e0d3);
+  border-radius: 999px;
+  transition: background 0.15s ease;
+  cursor: pointer;
+}
+
+.toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--white, #fff);
+  transition: transform 0.15s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+.toggle-switch input:checked + .toggle-track { background: var(--forest, #1f7a43); }
+.toggle-switch input:checked + .toggle-track .toggle-thumb { transform: translateX(18px); }
+.toggle-switch input:disabled + .toggle-track { opacity: 0.6; cursor: not-allowed; }
+
+.admin-toplevel-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 20px;
+  border-bottom: 1.5px solid var(--line, #e5e0d3);
+}
+
+.admin-toplevel-tab {
+  background: none;
+  border: none;
+  padding: 10px 16px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #8a8270;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1.5px;
+}
+
+.admin-toplevel-tab.active {
+  color: var(--forest, #1f7a43);
+  border-bottom-color: var(--coral, #ff6b4a);
+}
+
+.admin-settings-view {
+  max-width: 640px;
+}
