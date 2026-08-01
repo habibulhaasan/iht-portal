@@ -1414,7 +1414,7 @@ select:disabled {
 
 .about-tab {
   padding: 24px 20px 40px;
-  max-width: 640px;
+  max-width: auto;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -1528,6 +1528,34 @@ select:disabled {
   font-size: 13px;
   color: #6b6455;
   line-height: 1.6;
+}
+
+/* ---------- About tab: Bangla typography ---------- */
+.about-tab {
+  font-family: "Hind Siliguri", var(--font-body), sans-serif;
+}
+
+.about-tab h2,
+.about-tab h3 {
+  font-family: "Hind Siliguri", var(--font-body), sans-serif;
+  font-weight: 600;
+}
+
+.about-tab .about-description,
+.about-tab .about-list li,
+.about-tab .about-security-note p {
+  line-height: 1.8; /* Bengali script needs more vertical breathing room than Latin at the same line-height */
+}
+
+.about-dev-role {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--coral-dark, #e2532f);
+  background: #fdeeea;
+  padding: 3px 10px;
+  border-radius: 999px;
+  margin-bottom: 10px;
 }
 
 .admin-shell {
