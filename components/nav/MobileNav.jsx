@@ -12,7 +12,10 @@ export default function MobileNav({ items, activeKey, onNavigate }) {
             onClick={() => onNavigate(item)}
             aria-current={activeKey === item.key ? "page" : undefined}
           >
-            <Icon size={20} />
+            <span className="mobile-nav-icon-wrap">
+              <Icon size={20} />
+              {item.badge != null && <span className="mobile-nav-badge">{item.badge > 9 ? "9+" : item.badge}</span>}
+            </span>
             <span>{item.label}</span>
           </button>
         );

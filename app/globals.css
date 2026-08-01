@@ -1901,3 +1901,179 @@ select:disabled {
 .admin-settings-view {
   max-width: 640px;
 }
+
+/* ---------- Nav badges ---------- */
+.nav-badge {
+  margin-left: 8px;
+  background: var(--coral, #ff6b4a);
+  color: var(--white, #fff);
+  font-size: 10.5px;
+  font-weight: 800;
+  padding: 1px 7px;
+  border-radius: 999px;
+  line-height: 1.5;
+}
+
+.mobile-nav-icon-wrap { position: relative; display: inline-flex; }
+.mobile-nav-badge {
+  position: absolute;
+  top: -5px;
+  right: -8px;
+  background: var(--coral, #ff6b4a);
+  color: var(--white, #fff);
+  font-size: 9.5px;
+  font-weight: 800;
+  min-width: 15px;
+  height: 15px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 3px;
+  border: 1.5px solid var(--white, #fff);
+}
+
+/* ---------- Notifications: member tab ---------- */
+.notifications-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.notifications-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 48px 0;
+  color: #9a927e;
+  text-align: center;
+}
+
+.notifications-list {
+  list-style: none;
+  padding: 0;
+  margin: 20px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.notification-item {
+  background: var(--white);
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  cursor: pointer;
+}
+
+.notification-item.unread {
+  border-color: var(--coral);
+  background: #fff8f5;
+}
+
+.notification-item-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.notification-title {
+  font-weight: 700;
+  color: var(--forest);
+  font-size: 14.5px;
+}
+
+.notification-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--coral);
+  flex-shrink: 0;
+}
+
+.notification-body {
+  font-size: 13.5px;
+  color: #4a4536;
+  margin: 6px 0 8px;
+  line-height: 1.5;
+}
+
+.notification-meta {
+  font-size: 11.5px;
+  color: #9a927e;
+}
+
+/* ---------- Notifications: admin compose panel ---------- */
+.admin-notify-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.notify-selected-member {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 13px;
+  background: var(--ivory-dim);
+  border: 1.5px solid var(--line);
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.notify-selected-email { color: #8a8270; font-size: 12.5px; }
+
+.notify-member-results {
+  margin-top: 8px;
+  border: 1.5px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.notify-member-result {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  text-align: left;
+  padding: 10px 13px;
+  background: var(--white);
+  border: none;
+  border-bottom: 1px solid var(--ivory-dim);
+  cursor: pointer;
+  font-size: 13.5px;
+}
+
+.notify-member-result:last-child { border-bottom: none; }
+.notify-member-result:hover { background: var(--ivory-dim); }
+
+.notify-history-list {
+  list-style: none;
+  padding: 0;
+  margin: 14px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.notify-history-list li {
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.notify-audience-chip {
+  margin-left: auto;
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--ivory-dim);
+  color: var(--forest);
+}

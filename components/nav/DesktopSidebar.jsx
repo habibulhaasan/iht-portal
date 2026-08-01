@@ -12,6 +12,7 @@ export default function DesktopSidebar({ items, activeKey, onNavigate, userEmail
             onClick={() => onNavigate(item)}
           >
             {item.label}
+            {item.badge != null && <span className="nav-badge">{item.badge}</span>}
           </button>
         ))}
       </nav>

@@ -7,6 +7,7 @@ import AdminGuard from "../../components/AdminGuard";
 import AdminEditForm from "../../components/admin/AdminEditForm";
 import AdminFilterBar from "../../components/admin/AdminFilterBar";
 import DirectorySettingsPanel from "../../components/admin/DirectorySettingsPanel";
+import AdminNotificationsPanel from "../../components/admin/AdminNotificationsPanel";
 
 const PAGE_SIZE = 30;
 const EMPTY_FILTERS = { department: "", session: "", status: "", completeness: "" };
@@ -112,6 +113,13 @@ export default function AdminPage() {
           >
             Directory settings
           </button>
+          <button
+            type="button"
+            className={`admin-toplevel-tab ${view === "notifications" ? "active" : ""}`}
+            onClick={() => setView("notifications")}
+          >
+            Notifications
+          </button>
         </div>
 
         {view === "settings" ? (
@@ -123,63 +131,66 @@ export default function AdminPage() {
             <div className={`admin-toolbar ${selectedUid ? "admin-toolbar-hidden-mobile" : ""}`}>
               <AdminFilterBar profiles={merged} filters={filters} onChange={setFilters} />
             </div>
+            {view === "notifications" ? (
+              <AdminNotificationsPanel />
+            ) : (
+              <div className={`admin-columns ${selectedUid ? "showing-detail" : ""}`}>
+                <div className="admin-list-pane">
+                  <h1>All members</h1>
+                  <input
+                    type="text"
+                    placeholder="Search name, email, department, session…"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="admin-search"
+                  />
+                  <div className="admin-list">
+                    {pageItems.map((p) => (
+                      <button
+                        key={p.id}
+                        className={`admin-list-item ${selectedUid === p.id ? "active" : ""}`}
+                        onClick={() => setSelectedUid(p.id)}
+                      >
+                        <div className="admin-list-item-name">
+                          {p.name || "(no name)"}
+                          {p.role === "admin" && <span className="admin-badge">ADMIN</span>}
+                          {!p.profileComplete && <span className="incomplete-badge">INCOMPLETE</span>}
+                        </div>
+                        <div className="admin-list-item-meta">{p.department} · {p.session} · {p.email}</div>
+                      </button>
+                    ))}
+                    {searched.length === 0 && <p className="helper-text">No matches.</p>}
+                  </div>
 
-            <div className={`admin-columns ${selectedUid ? "showing-detail" : ""}`}>
-              <div className="admin-list-pane">
-                <h1>All members</h1>
-                <input
-                  type="text"
-                  placeholder="Search name, email, department, session…"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="admin-search"
-                />
-                <div className="admin-list">
-                  {pageItems.map((p) => (
-                    <button
-                      key={p.id}
-                      className={`admin-list-item ${selectedUid === p.id ? "active" : ""}`}
-                      onClick={() => setSelectedUid(p.id)}
-                    >
-                      <div className="admin-list-item-name">
-                        {p.name || "(no name)"}
-                        {p.role === "admin" && <span className="admin-badge">ADMIN</span>}
-                        {!p.profileComplete && <span className="incomplete-badge">INCOMPLETE</span>}
-                      </div>
-                      <div className="admin-list-item-meta">{p.department} · {p.session} · {p.email}</div>
-                    </button>
-                  ))}
-                  {searched.length === 0 && <p className="helper-text">No matches.</p>}
+                  {searched.length > 0 && (
+                    <div className="admin-pagination">
+                      <button className="btn-ghost btn" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+                        ← Prev
+                      </button>
+                      <span className="admin-pagination-status">
+                        {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, searched.length)} of {searched.length}
+                      </span>
+                      <button className="btn-ghost btn" disabled={page >= pageCount} onClick={() => setPage((p) => p + 1)}>
+                        Next →
+                      </button>
+                    </div>
+                  )}
                 </div>
 
-                {searched.length > 0 && (
-                  <div className="admin-pagination">
-                    <button className="btn-ghost btn" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-                      ← Prev
+                <div className="admin-edit-pane">
+                  {selected && (
+                    <button type="button" className="admin-back-btn" onClick={() => setSelectedUid(null)}>
+                      ← Back to list
                     </button>
-                    <span className="admin-pagination-status">
-                      {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, searched.length)} of {searched.length}
-                    </span>
-                    <button className="btn-ghost btn" disabled={page >= pageCount} onClick={() => setPage((p) => p + 1)}>
-                      Next →
-                    </button>
-                  </div>
-                )}
+                  )}
+                  {selected ? (
+                    <AdminEditForm key={selected.id} profile={selected} />
+                  ) : (
+                    <p className="helper-text">Select a member from the list to view/edit their full profile.</p>
+                  )}
+                </div>
               </div>
-
-              <div className="admin-edit-pane">
-                {selected && (
-                  <button type="button" className="admin-back-btn" onClick={() => setSelectedUid(null)}>
-                    ← Back to list
-                  </button>
-                )}
-                {selected ? (
-                  <AdminEditForm key={selected.id} profile={selected} />
-                ) : (
-                  <p className="helper-text">Select a member from the list to view/edit their full profile.</p>
-                )}
-              </div>
-            </div>
+            )}
           </>
         )}
       </div>
