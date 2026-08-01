@@ -5,7 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "../context/AuthContext";
 import AppShell from "./nav/AppShell";
 
-const PUBLIC_PATHS = ["/login", "/register", "/forgot-password"];
+const PUBLIC_PATHS = ["/", "/login", "/register", "/forgot-password"];
 
 export default function RouteGuard({ children }) {
   const { user, userDoc, loading } = useAuth();
