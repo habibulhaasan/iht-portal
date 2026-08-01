@@ -3,6 +3,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "../../lib/firebase";
@@ -20,11 +21,11 @@ export default function RegisterPage() {
     setError("");
 
     if (form.password.length < 6) {
-      setError("Password must be at least 6 characters.");
+      setError("পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে।");
       return;
     }
     if (form.password !== form.confirm) {
-      setError("Passwords don't match.");
+      setError("পাসওয়ার্ড মিলছে না।");
       return;
     }
 
@@ -52,9 +53,7 @@ export default function RegisterPage() {
 
       await syncSessionCookie(cred.user);
 
-      // Hard navigation, not router.replace — see the comment in
-      // app/login/page.jsx for why: avoids Next's client Router Cache
-      // serving a stale pre-signup redirect for /onboarding.
+      // Hard navigation, not router.replace — see app/login/page.jsx.
       window.location.href = "/onboarding";
     } catch (err) {
       setError(friendlyError(err.code));
@@ -66,17 +65,20 @@ export default function RegisterPage() {
   return (
     <div className="auth-shell">
       <div className="auth-hero">
-        <div className="auth-hero-mark">IHT · Rangpur</div>
+        <div className="auth-hero-mark">
+        <div className="auth-hero-logo-wrap">
+          <Image src="/iht-rangpur-logo.png" alt="IHT Rangpur" fill className="auth-hero-logo" />
+        </div>          আইএইচটি · রংপুর
+        </div>
         <div>
           <h1 className="auth-hero-title">
-            Find your batchmates.
+            খুঁজে নিন আপনার
             <br />
-            Stay in the network.
+            ব্যাচমেটদের।
           </h1>
           <p className="auth-hero-sub">
-            A shared home for every current and former student of the Institute of Health
-            Technology, Rangpur — departments, sessions, and everyone who's donated blood along
-            the way.
+            ইনস্টিটিউট অফ হেলথ টেকনোলজি, রংপুর-এর প্রতিটি বর্তমান ও প্রাক্তন
+            শিক্ষার্থীর জন্য একটি অভিন্ন প্ল্যাটফর্ম।
           </p>
         </div>
         <div />
@@ -84,35 +86,38 @@ export default function RegisterPage() {
 
       <div className="auth-form-wrap">
         <div className="auth-card">
-          <h1>Create your account</h1>
-          <p className="subtitle">Start with the basics — you'll complete your full profile next.</p>
+          <div className="auth-card-logo-wrap">
+          <Image src="/iht-rangpur-logo.png" alt="IHT Rangpur" fill className="auth-card-logo" />
+        </div>
+          <h1 className="auth-card-text">অ্যাকাউন্ট তৈরি করুন</h1>
+          <p className="subtitle">প্রাথমিক তথ্য দিয়ে শুরু করুন — পরে সম্পূর্ণ প্রোফাইল করবেন।</p>
 
           {error && <div className="error-banner">{error}</div>}
 
           <form onSubmit={handleSubmit}>
             <div className="field">
-              <label>Full name</label>
-              <input type="text" required value={form.name} onChange={update("name")} placeholder="As it appears on your certificate" />
+              <label>পূর্ণ নাম</label>
+              <input type="text" required value={form.name} onChange={update("name")} placeholder="সার্টিফিকেটে যেমন আছে" />
             </div>
             <div className="field">
-              <label>Email</label>
+              <label>ইমেইল</label>
               <input type="email" required value={form.email} onChange={update("email")} placeholder="you@example.com" />
             </div>
             <div className="field">
-              <label>Password</label>
-              <input type="password" required value={form.password} onChange={update("password")} placeholder="At least 6 characters" />
+              <label>পাসওয়ার্ড</label>
+              <input type="password" required value={form.password} onChange={update("password")} placeholder="কমপক্ষে ৬ অক্ষর" />
             </div>
             <div className="field">
-              <label>Confirm password</label>
+              <label>পাসওয়ার্ড নিশ্চিত করুন</label>
               <input type="password" required value={form.confirm} onChange={update("confirm")} />
             </div>
             <button className="btn" type="submit" disabled={busy}>
-              {busy ? "Creating account…" : "Create account"}
+              {busy ? "অ্যাকাউন্ট তৈরি হচ্ছে…" : "অ্যাকাউন্ট তৈরি করুন"}
             </button>
           </form>
 
           <div className="auth-switch">
-            Already registered? <Link href="/login">Log in</Link>
+            আগে থেকেই নিবন্ধিত? <Link href="/login">লগ ইন করুন</Link>
           </div>
         </div>
       </div>
@@ -122,9 +127,9 @@ export default function RegisterPage() {
 
 function friendlyError(code) {
   const map = {
-    "auth/email-already-in-use": "That email is already registered — try logging in instead.",
-    "auth/invalid-email": "That email address doesn't look right.",
-    "auth/weak-password": "Please choose a stronger password.",
+    "auth/email-already-in-use": "এই ইমেইল দিয়ে আগেই একটি অ্যাকাউন্ট আছে — লগ ইন করে দেখুন।",
+    "auth/invalid-email": "ইমেইল ঠিকানাটি সঠিক মনে হচ্ছে না।",
+    "auth/weak-password": "আরেকটু শক্তিশালী পাসওয়ার্ড দিন।",
   };
-  return map[code] || "Something went wrong. Please try again.";
+  return map[code] || "কিছু একটা সমস্যা হয়েছে। আবার চেষ্টা করুন।";
 }

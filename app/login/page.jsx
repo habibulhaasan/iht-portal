@@ -3,6 +3,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../../lib/firebase";
 import { syncSessionCookie } from "../../lib/sessionCookie";
@@ -22,14 +23,8 @@ export default function LoginPage() {
       const cred = await signInWithEmailAndPassword(auth, form.email, form.password);
       await syncSessionCookie(cred.user);
 
-      // Hard navigation on purpose (not router.replace / router.push).
-      // middleware.js checks for the session cookie on every request, but
-      // Next's client-side Router Cache can still be holding an earlier
-      // redirect-to-/login response for "/dashboard" from before you were
-      // authenticated (e.g. from a prefetch while logged out). A soft
-      // navigation can serve that stale cached redirect and bounce straight
-      // back here — the "blink". A full page load bypasses that cache
-      // entirely and always asks the server fresh.
+      // Hard navigation on purpose — see original comment: avoids Next's
+      // client Router Cache serving a stale pre-auth redirect.
       window.location.href = "/dashboard"; // RouteGuard sends to /onboarding if incomplete
     } catch (err) {
       setError(friendlyError(err.code));
@@ -40,15 +35,18 @@ export default function LoginPage() {
   return (
     <div className="auth-shell">
       <div className="auth-hero">
-        <div className="auth-hero-mark">IHT · Rangpur</div>
+        <div className="auth-hero-mark">
+        <div className="auth-hero-logo-wrap">
+          <Image src="/iht-rangpur-logo.png" alt="IHT Rangpur" fill className="auth-hero-logo" />
+        </div>          
+        আইএইচটি · রংপুর
+        </div>
         <div>
           <h1 className="auth-hero-title">
-            Welcome
-            <br />
-            back.
+            স্বাগতম।
           </h1>
           <p className="auth-hero-sub">
-            Pick up where you left off — your directory, your donation log, your people.
+            আপনার প্রিয় ব্যাচমেন্ট ও এলামনাইদের সাথে তথ্য পেতে লগইন করুন।
           </p>
         </div>
         <div />
@@ -56,30 +54,37 @@ export default function LoginPage() {
 
       <div className="auth-form-wrap">
         <div className="auth-card">
-          <h1>Log in</h1>
-          <p className="subtitle">Enter your credentials to continue.</p>
+          <Image
+            src="/iht-rangpur-logo.png"
+            alt="IHT Rangpur"
+            width={56}
+            height={56}
+            className="auth-card-logo"
+          />
+          <h1 className="auth-card-text">লগ ইন করুন</h1>
+          <p className="subtitle">চালিয়ে যেতে আপনার তথ্য দিন।</p>
 
           {error && <div className="error-banner">{error}</div>}
 
           <form onSubmit={handleSubmit}>
             <div className="field">
-              <label>Email</label>
+              <label>ইমেইল</label>
               <input type="email" required value={form.email} onChange={update("email")} placeholder="you@example.com" />
             </div>
             <div className="field">
-              <label>Password</label>
+              <label>পাসওয়ার্ড</label>
               <input type="password" required value={form.password} onChange={update("password")} />
             </div>
             <div className="auth-switch" style={{ marginTop: -6, marginBottom: 18, textAlign: "right" }}>
-              <Link href="/forgot-password" style={{ fontSize: 13 }}>Forgot password?</Link>
+              <Link href="/forgot-password" style={{ fontSize: 13 }}>পাসওয়ার্ড ভুলে গেছেন?</Link>
             </div>
             <button className="btn" type="submit" disabled={busy}>
-              {busy ? "Logging in…" : "Log in"}
+              {busy ? "লগ ইন হচ্ছে…" : "লগ ইন"}
             </button>
           </form>
 
           <div className="auth-switch">
-            New here? <Link href="/register">Create an account</Link>
+            নতুন এসেছেন? <Link href="/register">অ্যাকাউন্ট তৈরি করুন</Link>
           </div>
         </div>
       </div>
@@ -89,10 +94,10 @@ export default function LoginPage() {
 
 function friendlyError(code) {
   const map = {
-    "auth/invalid-credential": "Incorrect email or password.",
-    "auth/user-not-found": "No account found with that email.",
-    "auth/wrong-password": "Incorrect password.",
-    "auth/too-many-requests": "Too many attempts — please wait a moment and try again.",
+    "auth/invalid-credential": "ইমেইল অথবা পাসওয়ার্ড সঠিক নয়।",
+    "auth/user-not-found": "এই ইমেইলে কোনো অ্যাকাউন্ট পাওয়া যায়নি।",
+    "auth/wrong-password": "পাসওয়ার্ড সঠিক নয়।",
+    "auth/too-many-requests": "অনেকবার চেষ্টা করা হয়েছে — একটু পরে আবার চেষ্টা করুন।",
   };
-  return map[code] || "Something went wrong. Please try again.";
+  return map[code] || "কিছু একটা সমস্যা হয়েছে। আবার চেষ্টা করুন।";
 }

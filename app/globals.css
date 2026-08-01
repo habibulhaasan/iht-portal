@@ -1535,6 +1535,14 @@ select:disabled {
   font-family: "Hind Siliguri", var(--font-body), sans-serif;
 }
 
+.auth-shell {
+  font-family: "Hind Siliguri", var(--font-body), sans-serif;
+}
+
+.auth-hero, .auth-hero-mark, .auth-hero-logo-wrap, .auth-hero-title, .auth-hero-sub, h1.auth-card-text, .field input::placeholder {
+  font-family: "Hind Siliguri", var(--font-body), sans-serif;
+}
+
 .directory-tab, .notifications-tab, .favorites-tab {
   font-family: "Hind Siliguri", var(--font-body), sans-serif;
 }
@@ -2265,4 +2273,39 @@ select:disabled {
 
 .directory-card-donation svg {
   color: var(--coral, #ff6b4a);
+}
+
+/* ---------- Auth pages: logo (fixed box, image always contained,
+   never stretched regardless of the source file's actual aspect ratio) ---------- */
+.auth-hero-logo-wrap {
+  position: relative;
+  width: 180px;
+  height: 180px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.auth-hero-logo-wrap img {
+  /* This turns a dark/black image completely pure white */
+  filter: brightness(0) invert(1);
+}
+
+.auth-hero-logo {
+  object-fit: contain;
+  padding: 4px; /* small breathing room so the mark doesn't touch the box edge */
+}
+
+.auth-card-logo-wrap {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 18px;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.auth-card-logo {
+  object-fit: contain;
 }
