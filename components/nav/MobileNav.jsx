@@ -1,9 +1,11 @@
 "use client";
 
-export default function MobileNav({ items, activeKey, onNavigate }) {
+import { MoreHorizontal } from "lucide-react";
+
+export default function MobileNav({ primaryItems, activeKey, onNavigate, overflowActive, overflowBadge, onMoreClick }) {
   return (
     <nav className="dashboard-nav-mobile" aria-label="Primary">
-      {items.map((item) => {
+      {primaryItems.map((item) => {
         const Icon = item.icon;
         return (
           <button
@@ -20,6 +22,19 @@ export default function MobileNav({ items, activeKey, onNavigate }) {
           </button>
         );
       })}
+
+      <button
+        type="button"
+        className={`mobile-nav-item ${overflowActive ? "active" : ""}`}
+        onClick={onMoreClick}
+        aria-haspopup="true"
+      >
+        <span className="mobile-nav-icon-wrap">
+          <MoreHorizontal size={20} />
+          {overflowBadge > 0 && <span className="mobile-nav-badge">{overflowBadge > 9 ? "9+" : overflowBadge}</span>}
+        </span>
+        <span>More</span>
+      </button>
     </nav>
   );
 }
